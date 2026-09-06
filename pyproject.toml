@@ -1,0 +1,90 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "atomic_ops"
+version = "0.1.0"
+description = "Fused Gated DeltaNet-2 kernels for TPU v5e (JAX/Pallas)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "jax>=0.4.20,<0.13",   # покрывает 0.11.1
+    "jaxlib>=0.4.20,<0.13",
+    "numpy>=1.24",
+]
+license = {text = "MIT"}
+authors = [{name = "Omirbay Akseleu", email = "omirbajakseleu5@gmail.com"}]
+keywords = ["jax", "pallas", "tpu", "gated-deltanet2",  "deltanet", "linear-attention", "gated-linear-attention"]
+classifiers = [
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+]
+
+[project.urls]
+Homepage = "https://github.com/Akseleu-J/atomic_ops"
+Repository = "https://github.com/Akseleu-J/atomic_ops"
+Issues = "https://github.com/Akseleu-J/atomic_ops/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
+    "ruff>=0.6.0",
+    "pre-commit>=3.0",
+]
+examples = [
+    "flax>=0.12.9,<0.13",
+    "optax>=0.1.7",
+]
+
+[tool.setuptools.packages.find]
+include = ["atomic_ops*"]
+exclude = ["tests*", "docs*", "benchmarks*", "examples*"]
+
+[tool.setuptools.package-data]
+atomic_ops = ["py.typed"]
+
+# ── Ruff configuration ──────────────────────────────────────────────────────
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "D",   # pydocstyle
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "D100", # Missing docstring in public module
+    "D104", # Missing docstring in public package
+    "D105", # Missing docstring in magic method
+    "D107", # Missing docstring in __init__
+    "D103", # Missing docstring in public function -- TODO: backfill kernel
+            # docstrings (build_chunk_scores_pallas, wy_solve_pallas,
+            # recompute_wy_pallas, gdn2_pallas_forward[_with_residuals],
+            # gdn2_inter_chunk_combine[_with_state], reverse_cumsum_bwd,
+            # gdn2_dhu_backward, dav_backward_pallas, wy_dqkg_backward_pallas,
+            # intra_backward_pallas, gdn2_forward[_trainable]) then remove
+            # this ignore. Tracked as a pre-1.0 cleanup item.
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
