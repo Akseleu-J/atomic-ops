@@ -1,0 +1,13 @@
+# Kaggle-pinned reproducibility lockfile for TPU v5e-8 notebooks/benchmarks.
+# This is NOT the supported version range for the published package --
+# see pyproject.toml's `dependencies` (jax>=0.4.20,<0.13) for that.
+# Pin exact versions here only to keep Kaggle benchmark runs reproducible.
+
+# Core JAX 
+jax==0.11.1
+jaxlib==0.11.1
+
+libtpu==0.0.46.1
+
+flax>=0.8.0
+optax>=0.2.0

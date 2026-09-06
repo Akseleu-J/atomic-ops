@@ -1,0 +1,18 @@
+{
+  "fp32": [
+    {"config": "small_B1_L1024", "stage": "fwd", "OLD_mb": 32.822, "JAX_REF_mb": 27.454, "PALLAS_mb": 31.646},
+    {"config": "small_B1_L1024", "stage": "bwd", "OLD_mb": 76.303, "JAX_REF_mb": 52.842, "PALLAS_mb": 56.386},
+    {"config": "small_B1_L1024", "stage": "fwdbwd", "OLD_mb": 76.337, "JAX_REF_mb": 52.900, "PALLAS_mb": 56.443},
+    {"config": "train_shape_B8_L4096", "stage": "fwd", "OLD_mb": 725.899, "JAX_REF_mb": 726.384, "PALLAS_mb": 724.706},
+    {"config": "train_shape_B8_L4096", "stage": "bwd", "OLD_mb": 1252.688, "JAX_REF_mb": 1249.912, "PALLAS_mb": 1238.035},
+    {"config": "train_shape_B8_L4096", "stage": "fwdbwd", "OLD_mb": 1252.746, "JAX_REF_mb": 1250.011, "PALLAS_mb": 1238.111}
+  ],
+  "bf16": [
+    {"config": "small_B1_L1024", "stage": "fwd", "OLD_mb": 31.046, "JAX_REF_mb": 31.046, "PALLAS_mb": 31.046},
+    {"config": "small_B1_L1024", "stage": "bwd", "OLD_mb": 61.088, "JAX_REF_mb": 33.092, "PALLAS_mb": 37.544},
+    {"config": "small_B1_L1024", "stage": "fwdbwd", "OLD_mb": 61.144, "JAX_REF_mb": 33.148, "PALLAS_mb": 37.601},
+    {"config": "train_shape_B8_L4096", "stage": "fwd", "OLD_mb": 915.486, "JAX_REF_mb": 915.486, "PALLAS_mb": 915.486},
+    {"config": "train_shape_B8_L4096", "stage": "bwd", "OLD_mb": 915.486, "JAX_REF_mb": 915.486, "PALLAS_mb": 915.486},
+    {"config": "train_shape_B8_L4096", "stage": "fwdbwd", "OLD_mb": 915.486, "JAX_REF_mb": 915.486, "PALLAS_mb": 915.486}
+  ]
+}
