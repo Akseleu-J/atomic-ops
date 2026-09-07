@@ -10,6 +10,12 @@ Status legend:
   script), but has NOT yet been measured end-to-end through the full
   pipeline it will ship in. Isolated validation is necessary but not
   sufficient for promotion to a default config.
+- **HYPOTHESIS-ONLY** — a proposed direction that exists only on paper
+  (no implementation, no tests, no benchmarks in this repo). It is
+  tracked for prioritization and to prevent duplicate re-invention,
+  but it must not be referenced as an existing or planned feature until
+  the preconditions listed in its section are met and it has been
+  promoted to at least ISOLATED-ONLY.
 - **HYPOTHESIS-REJECTED** — an investigated fix direction that measurement
   showed does not work. Kept here so it isn't re-attempted without new
   evidence.
@@ -129,9 +135,6 @@ milestone with a date.
 
 - Fused forward + backward Pallas kernels (Kernel A/B/C/D, B1-B5),
   `custom_vjp` trainable wrapper — v0.1.0.
-- Kernel B4 fix (`_kernel_b4_body` performance bug) — v0.1.1, ~50%
-  backward improvement, measured end-to-end and published in
-  `benchmarks/raw/`.
 
 (Nothing from the `use_centering` hypothesis appears in this section --
 see the hypothesis note above; no code for it exists yet.)
