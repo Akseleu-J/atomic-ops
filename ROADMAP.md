@@ -22,7 +22,9 @@ benchmarks, but they are not a substitute for the end-to-end gate.
 
 ---
 
-## Hypothesis (post-beta, not implemented): MXU-factorized pairwise decay (`use_centering`)
+## Hypothesis (post-beta, not implemented, HIGH POTENTIAL / UNVALIDATED): MXU-factorized pairwise decay (`use_centering`)
+
+> **Author's estimate:** back-of-envelope FLOP/tiling calculations suggest this could close most of the forward gap described in `KNOWN_LIMITATIONS.md` section 2 -- potentially the single highest-leverage item on this roadmap. This estimate is **not yet backed by any implementation or benchmark** in this repository; treat it as a strong prior for prioritization, not as a validated result. See the explicit precondition and step list below before any code is written.
 
 **Status:** HYPOTHESIS ONLY. No code for this exists anywhere in the
 package -- no `KernelConfig` field, no kernel branch in `gdn2_fwd.py` /

@@ -263,3 +263,5 @@ MIT — see [LICENSE](LICENSE). Kernels ported from the NVlabs Gated DeltaNet-2 
 If this package is useful in your research, consider giving it a ⭐ — it helps other researchers find it.
 Bug reports and questions go to [Issues](https://github.com/Akseleu-J/atomic-ops/issues).
 # atomic-ops
+
+> **Note on bwd vs fwd+bwd timings:** the `bwd` column is measured via `jax.vjp(loss, ...)`, which re-runs the forward pass internally to build the VJP closure before the backward pass executes. This is why `bwd` and `fwdbwd` numbers are nearly identical in the tables above/below -- it is an artifact of the measurement method (the forward cost is unavoidably included in both), not a claim that backward alone costs the same as forward+backward combined.

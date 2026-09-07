@@ -69,6 +69,11 @@ cause, until isolated.
 **Status:** landed in `beta/` as an opt-in experimental path, not wired
 into `model.py` or the public `gdn2_forward_trainable` dispatcher. Not a
 long-term architectural direction -- a stopgap pending section 1.
+**Target release: v0.1.5.** Isolated correctness/speed gates already pass
+(see numbers below); the remaining blocker before v0.1.5 is validating the
+path on a **real training run** (not just the isolated fwd+bwd benchmark),
+since only end-to-end training exercises long-run numerical stability that
+a single-batch gate cannot catch.
 
 **What it is:** forward uses a plain-JAX chunked-WY scan (same algorithm
 and residual layout as `gdn2_chunked_wy_reference`, but additionally
@@ -127,9 +132,10 @@ closed as of this writing):**
   `gdn2_token_serial_reference` (the derivation-independent reference, per
   `docs/TESTING_STRATEGY.md` Layer 2/3) is still pending.
 
-**Recommended framing for the 0.1.5 release:** ship as `beta/`, explicitly
-labeled experimental, not default-wired, pending the items above. Do not
-recommend for production training pipelines yet.
+**Recommended framing for the v0.1.5 release:** ship as `beta/`, explicitly
+labeled experimental, not default-wired, pending the items above -- most
+importantly the real-training validation run. Do not recommend for
+production training pipelines until that run is published.
 
 ## 6. Kernel-gap diagnostic (TPU v5e-8, KAGGLE_MEDIUM, B=8 L=4096, FP32)
 
@@ -220,3 +226,5 @@ sufficient to reject the dispatch-overhead hypothesis.
   whether the hybrid remains a recommended path, since `beta/` code should
   still meet the project's normal evidentiary bar before any wider
   promotion.
+
+> **Note on bwd vs fwd+bwd timings:** the `bwd` column is measured via `jax.vjp(loss, ...)`, which re-runs the forward pass internally to build the VJP closure before the backward pass executes. This is why `bwd` and `fwdbwd` numbers are nearly identical in the tables above/below -- it is an artifact of the measurement method (the forward cost is unavoidably included in both), not a claim that backward alone costs the same as forward+backward combined.
