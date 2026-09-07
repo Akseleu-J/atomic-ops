@@ -1,6 +1,6 @@
 """
 Install:
-    pip install atomic_ops
+    pip install atomic-ops
 """
 import jax
 import jax.numpy as jnp

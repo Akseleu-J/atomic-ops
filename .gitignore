@@ -63,3 +63,5 @@ benchmarks/*.pdf
 
 # Logs
 *.log
+fix_repo_and_commits.sh
+fix_pip_install_name.sh

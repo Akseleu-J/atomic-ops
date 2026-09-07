@@ -2,7 +2,7 @@
 Minimal usage example for atomic_ops.
 
 Install:
-    pip install atomic_ops
+    pip install atomic-ops
 
 Run:
     python minimal_usage.py

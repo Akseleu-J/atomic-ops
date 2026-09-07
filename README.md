@@ -39,13 +39,13 @@ Kaggle TPU v5e (`KAGGLE_SMALL` / `KAGGLE_MEDIUM` / `KAGGLE_LARGE`) and an
 ## Installation
 
 ```bash
-pip install atomic_ops
+pip install atomic-ops
 
 # or from source
-pip install git+https://github.com/Akseleu-J/atomic_ops.git
+pip install git+https://github.com/Akseleu-J/atomic-ops.git
 
 # development
-git clone https://github.com/Akseleu-J/atomic_ops.git
+git clone https://github.com/Akseleu-J/atomic-ops.git
 cd atomic_ops
 pip install jax==0.11.1 jaxlib==0.11.1 libtpu==0.0.46 flax==0.12.9 optax==0.2.4
 ```
@@ -78,7 +78,7 @@ print(h_final.shape)  # (4, 6, 128, 128)
 
 ### Runnable examples
 
-Both examples work out of the box after `pip install atomic_ops`:
+Both examples work out of the box after `pip install atomic-ops`:
 
 - [`examples/minimal_usage.py`](examples/minimal_usage.py) — 20-line minimal script:
 build tensors, run `gdn2_forward_trainable`, print output shapes. Includes the
@@ -87,6 +87,8 @@ build tensors, run `gdn2_forward_trainable`, print output shapes. Includes the
 Optax training step: a `GDN2Layer` module that projects `x` into `q,k,v,w,b,g`,
 applies the gate via `-softplus(g)` (keeps `g <= 0`), auto-picks a config with
 `get_recommended_config`, and runs one AdamW update step.
+
+- [`notebooks/gdn2-with-atomic-ops-guide.ipynb`](notebooks/gdn2-with-atomic-ops-guide.ipynb) — a full Kaggle TPU v5e-8 guide notebook: installs `atomic-ops` from PyPI and trains a ~70M-parameter byte-level GDN-2 language model on enwik8, with a working data-parallel mesh setup, plateau-adaptive LR schedule, checkpointing, and a real published run (best val bpb, wall-clock time).
 
 ```bash
 python examples/minimal_usage.py       # forward+backward, prints backend + shapes
@@ -250,7 +252,7 @@ MIT — see [LICENSE](LICENSE). Kernels ported from the NVlabs Gated DeltaNet-2 
 @software{atomic_ops,
   author = {Omirbay, Akseleu},
   title  = {atomic_ops: Fused Gated DeltaNet-2 kernels for TPU v5e in JAX/Pallas},
-  url    = {https://github.com/Akseleu-J/atomic_ops},
+  url    = {https://github.com/Akseleu-J/atomic-ops},
   license = {MIT},
   year   = {2026}
 }
@@ -259,5 +261,5 @@ MIT — see [LICENSE](LICENSE). Kernels ported from the NVlabs Gated DeltaNet-2 
 ## Support
 
 If this package is useful in your research, consider giving it a ⭐ — it helps other researchers find it.
-Bug reports and questions go to [Issues](https://github.com/Akseleu-J/atomic_ops/issues).
+Bug reports and questions go to [Issues](https://github.com/Akseleu-J/atomic-ops/issues).
 # atomic-ops

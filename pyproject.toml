@@ -27,9 +27,9 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Akseleu-J/atomic_ops"
-Repository = "https://github.com/Akseleu-J/atomic_ops"
-Issues = "https://github.com/Akseleu-J/atomic_ops/issues"
+Homepage = "https://github.com/Akseleu-J/atomic-ops"
+Repository = "https://github.com/Akseleu-J/atomic-ops"
+Issues = "https://github.com/Akseleu-J/atomic-ops/issues"
 
 [project.optional-dependencies]
 dev = [
