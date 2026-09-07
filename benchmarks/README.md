@@ -49,6 +49,9 @@ For complete per‑stage breakdowns (fwd / bwd / fwdbwd) and all configs:
 
 ---
 
+
+> **Note on bwd vs fwd+bwd timings:** the `bwd` column is measured via `jax.vjp(loss, ...)`, which re-runs the forward pass internally to build the VJP closure before the backward pass executes. This is why `bwd` and `fwdbwd` numbers are nearly identical in the tables above/below -- it is an artifact of the measurement method (the forward cost is unavoidably included in both), not a claim that backward alone costs the same as forward+backward combined.
+
 ## 🔁 Reproducibility
 
 To reproduce these numbers yourself, run:
