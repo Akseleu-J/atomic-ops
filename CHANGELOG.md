@@ -62,5 +62,5 @@ First public release under the `atomic_ops` name (renamed from
 | fwd+bwd vs pure-JAX chunked WY | 2.6x | 3.4x |
 | Best-case vs associative_scan (all shapes) | 38.8x | 18.7x |
 
-[Unreleased]: https://github.com/Akseleu-J/atomic_ops/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/Akseleu-J/atomic_ops/releases/tag/v0.1.0
+[Unreleased]: https://github.com/Akseleu-J/atomic-ops/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Akseleu-J/atomic-ops/releases/tag/v0.1.0

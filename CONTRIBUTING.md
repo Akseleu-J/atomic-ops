@@ -6,7 +6,7 @@ implementation of fused Gated DeltaNet-2 kernels in JAX/Pallas for TPU v5e.
 ## Quick start
 
 ```bash
-git clone https://github.com/Akseleu-J/atomic_ops.git
+git clone https://github.com/Akseleu-J/atomic-ops.git
 cd atomic_ops
 pip install -e ".[dev]"
 pre-commit install
@@ -61,7 +61,7 @@ suite was run and results are referenced in the PR description.
 
 ## Reporting bugs
 
-Please use the [Bug Report](https://github.com/Akseleu-J/atomic_ops/issues/new?template=bug_report.md)
+Please use the [Bug Report](https://github.com/Akseleu-J/atomic-ops/issues/new?template=bug_report.md)
 template and include:
 
 - JAX version (`jax.__version__`)
