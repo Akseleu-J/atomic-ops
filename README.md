@@ -2,10 +2,20 @@
 
 **Fused Gated DeltaNet-2 (GDN-2) kernels for TPU v5e, written in JAX/Pallas.**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
-[![TPU v5e](https://img.shields.io/badge/TPU-v5e-orange.svg)](https://cloud.google.com/tpu/docs/v5e)
-
+<p align="center">
+  <a href="https://pypi.org/project/atomic-ops/">
+    <img src="https://img.shields.io/pypi/v/atomic-ops?style=flat-square&color=blue" alt="PyPI">
+  </a>
+  <a href="https://pypi.org/project/atomic-ops/">
+    <img src="https://img.shields.io/pypi/pyversions/atomic-ops?style=flat-square" alt="Python">
+  </a>
+  <a href="https://github.com/Akseleu-J/atomic-ops/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/Akseleu-J/atomic-ops?style=flat-square" alt="License">
+  </a>
+  <a href="https://cloud.google.com/tpu/docs/v5e">
+    <img src="https://img.shields.io/badge/TPU-v5e-orange?style=flat-square" alt="TPU v5e">
+  </a>
+</p>
 A from-scratch port of the [NVlabs Gated DeltaNet-2](https://github.com/NVlabs/GatedDeltaNet-2) Triton kernels
 to `jax.experimental.pallas`, targeting **TPU v5e-8**. The backward pass is a single fused `custom_vjp`
 that reuses forward residuals instead of recomputing them.
