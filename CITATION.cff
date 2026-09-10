@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the repository and release."
+title: "Atomic Ops: Fused Gated DeltaNet-2 Kernels for TPU v5e in JAX/Pallas"
+type: software
+authors:
+  - family-names: "Omirbay"
+    given-names: "Akseleu"
+repository-code: "https://github.com/Akseleu-J/atomic-ops"
+version: "0.1.0"
+date-released: "2026-09-06"
+license: "mit"
