@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.0] - 2026-09-05
+## [0.1.0] - 2026-09-06
 
 First public release under the `atomic_ops` name (renamed from
 `atomic_ops` prior to release; no prior published history).
