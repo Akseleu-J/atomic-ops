@@ -1,7 +1,6 @@
 # atomic_ops
 
 **Fused Gated DeltaNet-2 (GDN-2) kernels for TPU v5e, written in JAX/Pallas.**
-
 <p align="center">
   <a href="https://pypi.org/project/atomic-ops/">
     <img src="https://img.shields.io/pypi/v/atomic-ops?style=flat-square&color=blue" alt="PyPI">
@@ -15,11 +14,14 @@
   <a href="https://cloud.google.com/tpu/docs/v5e">
     <img src="https://img.shields.io/badge/TPU-v5e-orange?style=flat-square" alt="TPU v5e">
   </a>
+  <a href="https://doi.org/10.5281/zenodo.22706659">
+    <img src="https://zenodo.org/badge/DOI/10.5281/zenodo.22706659.svg" alt="DOI">
+  </a>
 </p>
-A from-scratch port of the [NVlabs Gated DeltaNet-2](https://github.com/NVlabs/GatedDeltaNet-2) Triton kernels
-to `jax.experimental.pallas`, targeting **TPU v5e-8**. The backward pass is a single fused `custom_vjp`
-that reuses forward residuals instead of recomputing them.
 
+---
+
+A from-scratch port of the [NVlabs Gated DeltaNet-2](https://github.com/NVlabs/GatedDeltaNet-2) Triton kernels to `jax.experimental.pallas`, targeting **TPU v5e-8**. The backward pass is implemented as a single fused `custom_vjp` that reuses forward residuals instead of recomputing them.
 > **Headline numbers (measured, see [Benchmarks](#-benchmarks)):** on the full training shape
 > (batch 8, seq 4096, 6 heads, d_head 128) the fused backward makes the training step
 > **2.6× (FP32) / 3.4× (BF16) faster than the best pure-JAX WY baseline** and
