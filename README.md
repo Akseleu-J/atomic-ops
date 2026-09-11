@@ -175,6 +175,22 @@ Memory is on par with the pure-JAX reference (the backward reuses forward residu
 recomputing them). Details:
 [`benchmarks/raw/benchmark_memory_final_averaged.md`](benchmarks/raw/benchmark_memory_final_averaged.md).
 
+## Citation
+
+If you use this software, benchmark results, or kernels in your work, please
+cite the v0.1.0 release:
+
+```bibtex
+@software{akseleu_atomic_ops_2026,
+  author  = {Omirbay Akseleu},
+  title   = {Atomic Ops: Fused Gated DeltaNet-2 Kernels for TPU v5e in JAX/Pallas},
+  year    = {2026},
+  version = {v0.1.0},
+  publisher = {Zenodo},
+  doi     = {10.5281/zenodo.22706659},
+  url     = {[https://doi.org/10.5281/zenodo.22706659](https://doi.org/10.5281/zenodo.22706659)}
+}
+```
 ### Reproduce
 
 ```bash
