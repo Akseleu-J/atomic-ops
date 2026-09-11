@@ -6,6 +6,8 @@ authors:
   - family-names: "Omirbay"
     given-names: "Akseleu"
 repository-code: "https://github.com/Akseleu-J/atomic-ops"
+url: "https://doi.org/10.5281/zenodo.22706659"
 version: "0.1.0"
+doi: "10.5281/zenodo.22706659"
 date-released: "2026-09-06"
 license: "mit"
