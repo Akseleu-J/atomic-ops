@@ -81,3 +81,18 @@ template and include:
 For questions about the WY-formulation, kernel blocking strategy, or the
 backward chain (B1-B5), see `docs/TESTING_STRATEGY.md` and inline docstrings
 in `atomic_ops/gdn2_fwd.py` and `atomic_ops/gdn2_bwd.py`.
+
+## JAX version policy
+
+Three sources pin JAX, for different purposes — do not confuse them:
+
+- `pyproject.toml`: `jax>=0.4.20,<0.13` — the *supported range*.
+  Bug reports against any version in this range are in scope.
+- `requirements.txt`: `jax==0.11.1` — **Kaggle lockfile** for the
+  reproducible notebook/attestation runs. Not a support boundary.
+- `.github/workflows/ci.yml`: `jax==0.11.2` — CI snapshot. Green
+  CI means the code passes on this specific version; it does not
+  assert that 0.11.2 is the only supported version.
+
+If you hit a version-specific bug, note the exact `jax.__version__`
+in your issue.

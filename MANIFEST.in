@@ -2,3 +2,4 @@ include LICENSE
 include README.md
 recursive-include atomic_ops py.typed
 recursive-include atomic_gdn2 py.typed
+include CHANGELOG.md

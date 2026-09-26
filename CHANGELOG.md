@@ -1,5 +1,7 @@
 # Changelog
 
+## [Unreleased]
+
 ## [0.2.0] — 2026-09-27
 
 ### Added — `atomic_gdn2` package
@@ -33,7 +35,16 @@ B=4, D=128, `bs2=64`:
 
 Speedup peaks at H=6 on a single chip; beyond H=6 requires sharding (TPU v5e-8).
 
-## [Unreleased]
+### Known issues
+
+- Attestation reports **145 PASS / 1 FAIL**. The single FAIL is
+  `3.1.easy_old`: the `associative_scan` legacy baseline hits
+  `RESOURCE_EXHAUSTED: 234.76G temporaries exceed 15.75G HBM` on
+  that shape. This is **expected baseline OOM, not a regression in
+  `atomic_gdn2`** — the legacy scan materializes per-head state
+  that the fused kernel does not. Documented for transparency, see
+  `attestation/final_report.json`.
+
 
 ## [0.1.0] - 2026-09-06
 
