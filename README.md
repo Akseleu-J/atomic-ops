@@ -11,8 +11,10 @@ Fused forward + backward GDN-2 kernels. **10–39×** faster than
 ### `atomic_gdn2` v0.2.0 — next generation (shipped inside `atomic-ops` 0.2.0)
 - Unified **mega-backward** (B2+B1+B3+B4+B5 in one Pallas launch)
 - **T-22 numerical boundary** documented (`half_span < 88`)
-- **9 specialized tests** (T1–T9) — finite differences, domain guard,
-  canary, phantom-param audit
+- **7 specialized pytest suites** (`tests_gdn2/`, T1–T6 + T9) — finite
+  differences, domain guard, canary, phantom-param audit, grad-vs-ref,
+  train smoke. Plus a separate **T8 bench script** at
+  `tools_gdn2/bench.py` (manual, not part of CI).
 - Zero-shot MQAR to **2048 tokens** at 0.9995
 
 ```bash
@@ -55,6 +57,12 @@ B=4, D=128, `bs2=64`:
 | 6 | **468x** | **448x** |
 
 Correctness: `rel_l2(NEW, JAX_REF) = 2.5e-06` at H in {4,6}, L=2048.
+
+**Attestation note.** The correctness/training cells referenced in
+this README are an **external TPU attestation suite** (16 notebooks,
+real v5e-1 / v5e-8), **not** the pytest suites in `tests_gdn2/`.
+CI in this repo runs CPU-only `interpret=True` smoke tests.
+See [`attestation/`](./attestation/) and [`docs/ATTESTATION.md`](./docs/ATTESTATION.md).
 
 Speedup grows with head count and peaks at H=6 on a single chip: the fused
 kernel's tile pack (`bs2=64`) fits cleanly up to 6 heads, while
@@ -334,6 +342,8 @@ atomic_ops/
 ├── tests_gdn2/                  # atomic_gdn2 (T1–T9)
 ├── docs/ATTESTATION.md          # v0.2.0 numbers
 └── .github/workflows/           # CI
+```
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). In short: `pytest tests/test_gdn2_full_math_correctness.py`
