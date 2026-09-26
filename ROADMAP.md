@@ -87,9 +87,10 @@ milestone with a date.
 ## Research hypothesis: MXU-factorized pairwise decay (`use_centering`)
 
 > **Author's estimate:** back-of-envelope FLOP/tiling calculations suggest
-> this could close most of the forward gap described in
-> `KNOWN_LIMITATIONS.md` section 2 — potentially the single highest-leverage
-> item on this roadmap. This estimate is **not yet backed by any
+> this could further accelerate the fused forward at very large head counts.
+> For `atomic_gdn2` v0.2.0 the forward is already faster than both
+> `atomic_ops` v0.1.0 Pallas forward and pure-JAX WY reference — this is
+> a marginal-gain optimization, not a gap-closing fix. This estimate is **not yet backed by any
 > implementation or benchmark** in this repository; treat it as a strong
 > prior for prioritization, not as a validated result.
 
@@ -108,15 +109,16 @@ multiply + manual reduction) rather than MXU-bound. In principle,
 centering the pairwise decay term `exp(gc_i - gc_j)` around a shared
 per-chunk reference point `gn` (e.g. `gn = gc[bt // 2]`) factors it into
 two real matmuls (`q_scaled @ k_scaled.T`) instead of a VPU reduction,
-which is the kind of change that could meaningfully close the forward gap
-described in `KNOWN_LIMITATIONS.md` section 2.
+which is the kind of change that could further accelerate the forward pass
+at large head counts (marginal-gain optimization).
 
-**Precondition:** the fused forward currently sits at ~0.62x of pure-JAX
-WY (see `KNOWN_LIMITATIONS.md` section 2). An earlier hybrid path
-(JAX-forward + Pallas-backward) was investigated and **closed as
-HYPOTHESIS-REJECTED** — it did not deliver an end-to-end win. So this
-`use_centering` factorization is now the primary candidate direction for
-closing the forward gap, not a fallback.
+**Precondition:** for `atomic_gdn2` v0.2.0 the fused forward is already
+faster than both `atomic_ops` v0.1.0 Pallas forward and pure-JAX WY
+reference on the measured shapes. The earlier hybrid path (JAX-forward +
+Pallas-backward) was investigated and **closed as HYPOTHESIS-REJECTED**.
+This `use_centering` factorization remains a candidate for further
+forward-only optimization at larger head counts, but is not required to
+close any current v0.2.0 gap.
 
 **What "validating this hypothesis" would require, if pursued (none of
 this exists yet):**
@@ -238,11 +240,11 @@ possibly enable larger `bs2`.
 
 **Status:** open question, contingent on v0.3.0 items above.
 
-Today the fused forward is ~0.62x of the pure-JAX WY reference (see
-`KNOWN_LIMITATIONS.md`). Two paths forward: (a) MXU factorization of
-Kernel A/B4, or (b) accept a pure-JAX forward + fused Pallas backward
-as the recommended trainable configuration — noting that this is
-exactly what the closed hybrid path attempted, and it did not deliver
-an end-to-end win under the chunking scheme tested. A different
-chunking scheme might still change that outcome; nothing here should
-be read as re-opening the closed hybrid path without new evidence.
+For `atomic_ops` v0.1.0 the fused forward is ~0.62x of the pure-JAX WY
+reference (see `KNOWN_LIMITATIONS.md` section 2). `atomic_gdn2` v0.2.0
+closes this gap: on the measured train shape its forward is faster than
+both the v0.1.0 Pallas path and the pure-JAX WY reference. Remaining
+forward-only work is tracked as the `use_centering` research hypothesis
+above, targeting very large head counts rather than closing any current
+v0.2.0 gap. Nothing here should be read as re-opening the closed hybrid
+path without new evidence.

@@ -58,6 +58,13 @@ B=4, D=128, `bs2=64`:
 
 Correctness: `rel_l2(NEW, JAX_REF) = 2.5e-06` at H in {4,6}, L=2048.
 
+**End-to-end training step:** on a 27.5M-parameter LM (B=8, L=2048, H=6,
+D=128), `atomic_gdn2` NEW runs at **103.29 ms/step** (158,626 tok/s) vs
+`associative_scan` OLD at **20674.62 ms/step** (792 tok/s) — a **200.17×**
+end-to-end speedup. The fused backward also outperforms both the v0.1.0
+Pallas backward and pure-JAX WY; the fused forward is faster than the
+pure-JAX WY reference on the same shape.
+
 **Attestation note.** The correctness/training cells referenced in
 this README are an **external TPU attestation suite** (16 notebooks,
 real v5e-1 / v5e-8), **not** the pytest suites in `tests_gdn2/`.
@@ -198,6 +205,13 @@ The initial recurrent state `h0` is optional, shape `(batch, heads, d_head, d_he
 
 ## Benchmarks
 
+> **Note on bwd vs fwd+bwd timings:** the `bwd` column is measured via `jax.vjp(loss, ...)`, which re-runs the forward pass internally to build the VJP closure before the backward pass executes. This is why `bwd` and `fwdbwd` numbers are nearly identical in the tables above/below -- it is an artifact of the measurement method (the forward cost is unavoidably included in both), not a claim that backward alone costs the same as forward+backward combined.
+
+
+**These benchmark tables are `atomic_ops` v0.1.0** (the stable PyPI release). For
+`atomic_gdn2` v0.2.0 numbers see the headline at the top of this README and
+`attestation/scaling.json`.
+
 Measured on **TPU v5e-8** with `jax==0.11.1`, `jaxlib==0.11.1`, `libtpu==0.0.46.1`.
 Baselines: **OLD** = `jax.lax.associative_scan` GDN-2 (the formulation used in many research
 codebases); **JAX_REF** = chunked WY recurrence in pure JAX. Mean steady-state over repeats, ms.
@@ -299,10 +313,11 @@ alternative `KAGGLE_SMALL` blocking:
 
 - **TPU-only fused kernels.** The Pallas path assumes TPU MXU tiling and `d_head = 128`;
 other backends/dtypes automatically fall back to the pure-JAX reference (slower, correct).
-- **Fused forward is currently slower than the pure-JAX WY forward** (~0.6×). If your workload
-is inference-only, use `gdn2_forward` / `gdn2_chunked_wy_reference`. The experimental
-hybrid `JAX forward + Pallas backward` path was closed in v0.2.0
-(`HYPOTHESIS-REJECTED`, see `ROADMAP.md`).
+- **`atomic_ops` v0.1.0: fused forward is slower than the pure-JAX WY forward** (~0.6×).
+If your workload is inference-only on v0.1.0, use `gdn2_forward` / `gdn2_chunked_wy_reference`.
+This gap is **closed in `atomic_gdn2` v0.2.0**, whose fused forward is faster than both the
+v0.1.0 Pallas forward and the pure-JAX WY reference. The experimental hybrid `JAX forward +
+Pallas backward` path was closed in v0.2.0 (`HYPOTHESIS-REJECTED`, see `ROADMAP.md`).
 - `seq_len` must be divisible by `config.bt` (256 by default, 128 for `KAGGLE_SMALL`).
 - `KernelConfig.bt` must equal `2 * config.bc`; vary `mb` for solver granularity.
 - The pairwise decay computation (Kernel A / B4) currently uses a VPU-bound broadcast-reduce
@@ -357,6 +372,3 @@ MIT — see [LICENSE](LICENSE). Kernels ported from the NVlabs Gated DeltaNet-2 
 
 If this package is useful in your research, consider giving it a ⭐ — it helps other researchers find it.
 Bug reports and questions go to [Issues](https://github.com/Akseleu-J/atomic-ops/issues).
-# atomic-ops
-
-> **Note on bwd vs fwd+bwd timings:** the `bwd` column is measured via `jax.vjp(loss, ...)`, which re-runs the forward pass internally to build the VJP closure before the backward pass executes. This is why `bwd` and `fwdbwd` numbers are nearly identical in the tables above/below -- it is an artifact of the measurement method (the forward cost is unavoidably included in both), not a claim that backward alone costs the same as forward+backward combined.

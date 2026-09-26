@@ -33,6 +33,14 @@ B=4, D=128, `bs2=64`:
 | 4 | 300x | 322x |
 | 6 | **468x** | **448x** |
 
+**End-to-end training step:** on a 27.5M-parameter LM (B=8, L=2048, H=6,
+D=128), `atomic_gdn2` v0.2.0 runs at **103.29 ms/step** (158,626 tok/s)
+vs `associative_scan` OLD at **20674.62 ms/step** (792 tok/s) — a
+**200.17× speedup**. The v0.2.0 fused forward is also faster than both the
+v0.1.0 `atomic_ops` Pallas forward and the pure-JAX WY reference, closing
+the v0.1.0 forward-speed gap documented in `KNOWN_LIMITATIONS.md` section 2
+(which now applies to v0.1.0 only).
+
 Speedup peaks at H=6 on a single chip; beyond H=6 requires sharding (TPU v5e-8).
 
 ### Known issues

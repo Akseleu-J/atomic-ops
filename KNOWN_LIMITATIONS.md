@@ -12,12 +12,18 @@ Kernel A (`build_chunk_scores_pallas`) and its backward counterpart B4 (`intra_b
 An MXU-factorized alternative has been explored as an isolated, off-by-default experiment and shows a large speedup in isolation, but has not been validated end-to-end and is not present in this codebase's kernels. See `ROADMAP.md` for the investigation, its current status, and the gates required before any such change would ship.
 
 
-## 2. Fused forward is slower than the pure-JAX WY forward
+## 2. `atomic_ops` v0.1.0 forward is slower than the pure-JAX WY forward
 
-**Status:** known performance gap, root cause now identified (see section
-6). An experimental hybrid path was investigated (section 5) but did not
-deliver the expected end-to-end gain and has been closed. The real fix
-remains the Kernel A/B4 VPU-to-MXU factorization tracked in `ROADMAP.md`.
+**Applies to:** `atomic_ops` v0.1.0 only. **Closed in `atomic_gdn2` v0.2.0.**
+
+**Status:** known performance gap in v0.1.0, root cause identified (see
+section 6). The experimental hybrid path (section 5) was closed without
+closing this gap in the v0.1.x generation. **`atomic_gdn2` v0.2.0 closes
+it**: on the measured train shape its fused forward is faster than both
+the v0.1.0 Pallas forward and the pure-JAX WY reference.
+
+The v0.1.0 numbers below are kept for historical context and for users
+still on the `atomic_ops` v0.1.x API.
 
 **Numbers (TPU v5e-8, B=8, L=4096):** Pallas fwd 102.08 ms (FP32) / 101.51 ms
 (BF16) vs JAX_REF fwd 63.24 ms / 62.38 ms -- about 0.62x (i.e. Pallas is
@@ -40,11 +46,16 @@ kernels:
 Kernel C (recompute) and Kernel D (inter-chunk scan) are cheap (~2.3 ms /
 ~3.4 ms) and not a concern.
 
-**Workaround:** for inference-only workloads use `gdn2_forward` (dispatches
-to the pure-JAX reference off-TPU) or `gdn2_chunked_wy_reference` directly.
-For training, the fused Pallas path still wins end-to-end because backward
-dominates the step. The forward-only gap is tracked as Kernel A/B4 MXU
-factorization in `ROADMAP.md`.
+**Workaround (v0.1.0):** for inference-only workloads on `atomic_ops` v0.1.0,
+use `gdn2_forward` (dispatches to the pure-JAX reference off-TPU) or
+`gdn2_chunked_wy_reference` directly.
+
+**Resolved in `atomic_gdn2` v0.2.0:** the fused forward is faster than both
+the v0.1.0 Pallas forward and pure-JAX WY, and the fused backward is also
+faster than the v0.1.x Pallas backward. End-to-end training step on a
+27.5M LM (B=8, L=2048, H=6, D=128): **103.29 ms/step** for `atomic_gdn2`
+NEW vs **20674.62 ms/step** for `associative_scan` OLD — **200.17× speedup**
+(158,626 tok/s vs 792 tok/s). See `README.md` and `ROADMAP.md`.
 
 ## 3. Fused kernels are TPU-only and require `d_head = 128`
 

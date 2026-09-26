@@ -37,7 +37,8 @@ Zero-shot @ 2048: 0.9995.
 | NEW (Pallas) | **9.53 ms** |
 
 Kernel speedup: 355x vs OLD, 8.59x vs PROD.
-E2E (25M LM): 177x vs OLD, 4.83x vs PROD.
+E2E (27.5M LM, B=8, L=2048, H=6): 200.17x vs OLD (103.29 ms vs 20674.62 ms),
+4.5x vs PROD.
 
 ## Amdahl (v5e-1)
 
