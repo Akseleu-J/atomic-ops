@@ -5,7 +5,7 @@ import numpy as np
 
 def load_enwik8(L, split="train", path="enwik8.zip"):
     if not Path(path).exists():
-        urllib.request.urlretrieve("http://mattmahoney.net/dc/enwik8.zip", path)
+        urllib.request.urlretrieve("https://mattmahoney.net/dc/enwik8.zip", path)
     with zipfile.ZipFile(path) as z, z.open("enwik8") as f:
         data = np.frombuffer(f.read(), dtype=np.uint8)
     a, b = {"train": (0, 90_000_000), "val": (90_000_000, 95_000_000), "test": (95_000_000, 100_000_000)}[split]

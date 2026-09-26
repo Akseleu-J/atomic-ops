@@ -208,19 +208,6 @@ residual. Needs its own measurement before being stated as fact.
 see that section for the full precondition and validation gates before
 any code is written).
 
-### Re-validate the B=8 507x slope-decomposition figure
-
-**Status:** DATA-INCONSISTENT, not yet resolved.
-
-An internal B=8, L=2048, H=4, single-chip run reported 507x via
-per-layer slope decomposition (see `attestation/final_report.json`,
-`8.amdahl_layerwise.vs_OLD`). At B=4 the same method fails structurally
-(see `KNOWN_LIMITATIONS.md`), so the two figures are not comparable and
-507x must not be quoted next to the B=4 headline table. Re-running the
-decomposition cleanly at B=8 (with an explicit note on which batch size
-it applies to) would let this be published as its own, correctly
-scoped, result instead of sitting as an internal-only number.
-
 ## v0.4.0 — exploratory
 
 ### Multi-chip chunk-scan (pipeline parallel)
