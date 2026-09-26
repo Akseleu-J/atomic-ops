@@ -33,16 +33,18 @@ overhead between them" hypothesis. The actual cost is concentrated in two
 kernels:
 - **Kernel A** (`build_chunk_scores_pallas`, scores): ~47.6 ms -- VPU-bound
   broadcast/reduce instead of MXU matmul (see section 1).
-- **Kernel B** (`wy_solve_pallas`, WY block solve): ~51.2 ms -- forward
-  substitution operates on `MB=16` micro-blocks, far below the TPU MXU's
-  efficient `128x128` tile size, so matmuls inside `_micro_forward_substitution`
-  are likely heavily padded/underutilized.
+- **Kernel B** (`wy_solve_pallas`, WY block solve): ~51.2 ms -- sequential,
+  data-dependent recursive forward-substitution in `_block_solve`; no
+  parallelism to expose to the MXU regardless of tile size. The earlier
+  `mb`-related hypothesis was ruled out by a sweep (see section 4).
 Kernel C (recompute) and Kernel D (inter-chunk scan) are cheap (~2.3 ms /
 ~3.4 ms) and not a concern.
 
 **Workaround:** for inference-only workloads use `gdn2_forward` (dispatches
 to the pure-JAX reference off-TPU) or `gdn2_chunked_wy_reference` directly.
-For training, see the experimental hybrid path (section 5).
+For training, the fused Pallas path still wins end-to-end because backward
+dominates the step. The forward-only gap is tracked as Kernel A/B4 MXU
+factorization in `ROADMAP.md`.
 
 ## 3. Fused kernels are TPU-only and require `d_head = 128`
 
@@ -59,11 +61,12 @@ the remaining kernels lower via Mosaic and require a TPU regardless of shape.
 - `KernelConfig.bt` must equal `2 * config.bc`; vary `mb` for solver
 granularity. Other `bt/bc` ratios raise `ValueError` by design (the
 top-level WY solve supports only the 2-block split).
-- `KernelConfig.mb` (currently 16 across all presets) is the likely cause
-of Kernel B's MXU underutilization noted in section 2; this is a candidate
-for tuning alongside the `use_centering` fix in v0.2.0, but has not been
-benchmarked independently yet -- treat as a hypothesis, not a confirmed
-cause, until isolated.
+- `KernelConfig.mb` (currently 16 across all presets) was the initial
+hypothesis for Kernel B's MXU underutilization, but a sweep of
+`mb ∈ {32, 64, 128}` showed no monotonic relationship (44.9–64.0 ms), so
+tile size is **not** the cause. The bottleneck is the sequential,
+data-dependent forward-substitution in `_block_solve`. See `ROADMAP.md`
+→ `Open, no fix scheduled: Kernel B`.
 
 ## 5. [CLOSED] Hybrid JAX-forward + Pallas-backward path
 
@@ -76,6 +79,8 @@ Closed as `HYPOTHESIS-REJECTED`; see `ROADMAP.md`. Code preserved at
 
 
 ## 6. Kernel-gap diagnostic (TPU v5e-8, KAGGLE_MEDIUM, B=8 L=4096, FP32)
+
+> **Note on bwd vs fwd+bwd timings:** the `bwd` column is measured via `jax.vjp(loss, ...)`, which re-runs the forward pass internally to build the VJP closure before the backward pass executes. This is why `bwd` and `fwdbwd` numbers are nearly identical in the tables above/below -- it is an artifact of the measurement method (the forward cost is unavoidably included in both), not a claim that backward alone costs the same as forward+backward combined.
 
 Run to test (and rule out) the hypothesis that Pallas-forward's slowness
 relative to JAX_REF comes from scheduling/barrier overhead between
@@ -103,7 +108,7 @@ some cross-kernel scheduling even across `pallas_call` boundaries). The
 "disconnected graphs" hypothesis is **ruled out**. Per-kernel breakdown:
 
 fwd: Kernel A 47.576 ms <- expensive, VPU pair-sum (see section 1/2)
-Kernel B 51.234 ms <- expensive, MB=16 sub-MXU-tile solve (see section 2/4)
+Kernel B 51.234 ms <- expensive, sequential forward-substitution (see sections 2/4)
 Kernel C 2.311 ms
 Kernel D 3.442 ms
 
@@ -136,24 +141,8 @@ sufficient to reject the dispatch-overhead hypothesis.
 
 ---
 
-## Roadmap
 
-**Status as of v0.2.0:** the experimental hybrid JAX-forward +
-Pallas-backward path (formerly `beta/gdn2_hybrid.py`) was investigated,
-attested end-to-end on real TPU, and **closed as HYPOTHESIS-REJECTED** —
-it did not deliver the expected fwd+bwd speedup once measured correctly.
-It is not planned, not wired into anything, and not a recommended path.
-Code is preserved for reference at `archive/gdn2_hybrid.py`.
-See `ROADMAP.md` ("HYPOTHESIS-REJECTED" section) for the full writeup.
-
-Forward-looking work (Kernel A/B4 MXU factorization, Kernel B `mb`
-sub-tile tuning, sharded H-scaling) is tracked exclusively in
-`ROADMAP.md` under v0.3.0+ — not duplicated here, to avoid this file and
-`ROADMAP.md` drifting out of sync again.
-
-> **Note on bwd vs fwd+bwd timings:** the `bwd` column is measured via `jax.vjp(loss, ...)`, which re-runs the forward pass internally to build the VJP closure before the backward pass executes. This is why `bwd` and `fwdbwd` numbers are nearly identical in the tables above/below -- it is an artifact of the measurement method (the forward cost is unavoidably included in both), not a claim that backward alone costs the same as forward+backward combined.
-
-## Single-chip tile-pack limit at H=6
+## 7. Single-chip tile-pack limit at H=6
 
 **Status:** hardware sweet spot, not a kernel bug.
 
@@ -171,7 +160,7 @@ speedup drops. This is a property of the single-chip VMEM/MXU budget,
 not of the algorithm. Meaningful scaling beyond H=6 requires sharding
 across chips (TPU v5e-8). See `ROADMAP.md` for the sharded-scaling plan.
 
-## Per-layer slope decomposition is invalid at B=4
+## 8. Per-layer slope decomposition is invalid at B=4
 
 **Status:** methodology limitation, documented for reproducibility.
 
@@ -192,7 +181,7 @@ table in `README.md` / `attestation/scaling.json` therefore reports only
 **direct kernel fwd+bwd measurements** at B=4, never slope-decomposed
 numbers — the two should not be mixed in the same table.
 
-## Cross-config numbers are not comparable without saying so
+## 9. Cross-config numbers are not comparable without saying so
 
 **Status:** reporting discipline note.
 
@@ -202,3 +191,18 @@ Example: `attestation/final_report.json`'s per-layer slope numbers were
 measured at B=8; the headline H-scaling table in `README.md` /
 `attestation/scaling.json` is measured at B=4. Both are correct in
 their own regime; neither supersedes or validates the other.
+
+## Roadmap
+
+**Status as of v0.2.0:** the experimental hybrid JAX-forward +
+Pallas-backward path (formerly `beta/gdn2_hybrid.py`) was investigated,
+attested end-to-end on real TPU, and **closed as HYPOTHESIS-REJECTED** —
+it did not deliver the expected fwd+bwd speedup once measured correctly.
+It is not planned, not wired into anything, and not a recommended path.
+Code is preserved for reference at `archive/gdn2_hybrid.py`.
+See `ROADMAP.md` ("HYPOTHESIS-REJECTED" section) for the full writeup.
+
+Forward-looking work (Kernel A/B4 MXU factorization, Kernel B `mb`
+sub-tile tuning, sharded H-scaling) is tracked exclusively in
+`ROADMAP.md` under v0.3.0+ — not duplicated here, to avoid this file and
+`ROADMAP.md` drifting out of sync again.

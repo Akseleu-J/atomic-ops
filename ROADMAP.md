@@ -28,91 +28,44 @@ benchmarks, but they are not a substitute for the end-to-end gate.
 
 ---
 
-## Hypothesis (post-beta, not implemented, HIGH POTENTIAL / UNVALIDATED): MXU-factorized pairwise decay (`use_centering`)
+## Completed (VALIDATED, shipped)
 
-> **Author's estimate:** back-of-envelope FLOP/tiling calculations suggest this could close most of the forward gap described in `KNOWN_LIMITATIONS.md` section 2 -- potentially the single highest-leverage item on this roadmap. This estimate is **not yet backed by any implementation or benchmark** in this repository; treat it as a strong prior for prioritization, not as a validated result. See the explicit precondition and step list below before any code is written.
+- Fused forward + backward Pallas kernels (Kernel A/B/C/D, B1-B5),
+  `custom_vjp` trainable wrapper — v0.1.0.
+- Direct kernel H-scaling measurements on TPU v5e-1 (B=4, D=128, `bs2=64`)
+  — v0.2.0. Peak 468x at H=6, L=2048. See `attestation/scaling.json`.
 
-**Status:** HYPOTHESIS ONLY. No code for this exists anywhere in the
-package -- no `KernelConfig` field, no kernel branch in `gdn2_fwd.py` /
-`gdn2_bwd.py`, no `NotImplementedError` gate. Nothing below has been
-measured in this repository; it is written down here so the idea isn't
-lost or re-invented from scratch, and so it isn't attempted before its
-listed prerequisite.
+(Nothing from the `use_centering` hypothesis appears in this section —
+no code for it exists yet.)
 
-**Why this is being tracked at all:** `KNOWN_LIMITATIONS.md` section 1/6
-identifies the pairwise decay computation in Kernel A
-(`build_chunk_scores_pallas`) and its backward counterpart B4
-(`intra_backward_pallas`) as VPU-bound (`_weighted_pair_sum` /
-`_dL_pair_sum` / `_dR_pair_sum` / `_dgc_pair_sum`: broadcast + elementwise
-multiply + manual reduction) rather than MXU-bound. In principle,
-centering the pairwise decay term `exp(gc_i - gc_j)` around a shared
-per-chunk reference point `gn` (e.g. `gn = gc[bt // 2]`) factors it into
-two real matmuls (`q_scaled @ k_scaled.T`) instead of a VPU reduction,
-which is the kind of change that could meaningfully close the forward gap
-described in `KNOWN_LIMITATIONS.md` section 2.
+---
 
-**Explicit precondition -- do not start this before it is met:** the
-`beta/gdn2_hybrid.py` path (JAX-forward + fused Pallas-backward, see
-`KNOWN_LIMITATIONS.md` section 5) must be fully validated end-to-end
-first (residual-parity test, BF16 numbers, memory numbers, full
-deep-correctness suite -- see that section's open-items list). The
-hybrid path is a smaller, already-working change; if it turns out to
-close the forward/backward gap on its own, an MXU-factorized rewrite of
-Kernel A/B4 may not be worth its implementation and validation cost. This
-hypothesis is the fallback plan **if and only if** the hybrid path is
-validated and still leaves a meaningful gap versus JAX_REF/PALLAS.
+## HYPOTHESIS-REJECTED
 
-**What "validating this hypothesis" would require, if pursued (none of
-this exists yet):**
-1. A from-scratch implementation of the centered factorization in
-   `_kernel_a_body`, gated behind a new, explicitly-named opt-in
-   `KernelConfig` field (with its own `NotImplementedError` safety gate,
-   matching how every other experimental knob in this codebase is
-   introduced) -- not assumed to already exist.
-2. Isolated correctness test (vs. the default/non-centered path) and
-   isolated speed benchmark for Kernel A, then the same for the B4
-   backward counterpart, including the backward gradient contribution
-   through the shared reference point `gn` (chain rule through
-   `eq_i = exp(clip(gc_i - gn))`, `ek_j = exp(clip(gn - gc_j))`) --
-   this is exactly the kind of shared-variable backward term that is
-   easy to compute but easy to forget to write back; any implementation
-   must have an explicit isolated test for it, independently re-derived
-   (not copy-pasted from the forward kernel), before it is trusted.
-3. Full `custom_vjp` pipeline correctness (multi-seed vs.
-   `gdn2_token_serial_reference`, finite-difference, `wy_eps` damping
-   interaction, bf16 coverage, `KAGGLE_SMALL` blocking) -- per the
-   layered strategy in `docs/TESTING_STRATEGY.md`.
-4. End-to-end fwd/bwd/fwdbwd wall-clock through
-   `gdn2_pallas_forward_trainable`, not just isolated kernel calls.
-5. Peak HBM (`run_memory_benchmark.py`) for the new path.
-6. A repeat of the kernel-gap diagnostic (sum of isolated per-kernel
-   timings vs. full pipeline) to rule out a new dispatch/scheduling gap
-   from the changed intermediate shapes.
+### Hybrid JAX-forward + Pallas-backward path (rejected 2026-09-27)
 
-**Do not** add a `use_centering` (or similarly named) field to
-`KernelConfig`, add branches to `_kernel_a_body`/`_kernel_b4_body`, or
-reference this hypothesis as an existing/gated/tested code path in
-`README.md`, `CHANGELOG.md`, or `KNOWN_LIMITATIONS.md` until steps 1-6
-above have actually been done. Until then this section is the only place
-in the repo where this idea should be mentioned.
+Investigated as an opt-in experimental path (originally `beta/gdn2_hybrid.py`).
+A full TPU attestation run showed no end-to-end (fwd+bwd) speedup over the
+fused Pallas path once measured correctly. Closed; not pursued further.
+Code archived at `archive/gdn2_hybrid.py`.
 
 ---
 
 ## Open, no fix scheduled: Kernel B (WY-solve)
 
 **Status:** OPEN. Confirmed not a tile-size (`mb`) issue via sweep
-(32/64/128 gave 44.9-64.0ms, no monotonic relationship) — bottleneck is
+(32/64/128 gave 44.9–64.0 ms, no monotonic relationship) — bottleneck is
 the sequential, data-dependent recursive block-forward-substitution in
 `_block_solve` (`N_MICRO` sequential steps with data dependency between
 them), which has no parallelism to expose to the MXU regardless of block
 size.
 
-**Why this could matter later:** *if* the post-beta `use_centering`
-hypothesis above is ever implemented and validated, Kernel B would likely
-become the dominant forward cost by a wide margin (an estimated ~51ms of
-~59.6ms forward, i.e. ~86%, extrapolated from today's isolated Kernel
-A/B4 VPU-vs-MXU numbers) -- itself unconfirmed and entirely contingent on
-that hypothesis being pursued at all (see the section above).
+**Why this could matter later:** *if* the `use_centering` hypothesis below
+is ever implemented and validated, Kernel B would likely become the
+dominant forward cost by a wide margin (an estimated ~51 ms of ~59.6 ms
+forward, i.e. ~86%, extrapolated from today's isolated Kernel A/B4
+VPU-vs-MXU numbers) — itself unconfirmed and entirely contingent on that
+hypothesis being pursued at all.
 
 **Candidate directions (none investigated yet):**
 - Alternative block-triangular-solve factorization that exposes more
@@ -131,24 +84,73 @@ milestone with a date.
 
 ---
 
-## Completed (VALIDATED, shipped)
+## Research hypothesis: MXU-factorized pairwise decay (`use_centering`)
 
-- Fused forward + backward Pallas kernels (Kernel A/B/C/D, B1-B5),
-  `custom_vjp` trainable wrapper — v0.1.0.
+> **Author's estimate:** back-of-envelope FLOP/tiling calculations suggest
+> this could close most of the forward gap described in
+> `KNOWN_LIMITATIONS.md` section 2 — potentially the single highest-leverage
+> item on this roadmap. This estimate is **not yet backed by any
+> implementation or benchmark** in this repository; treat it as a strong
+> prior for prioritization, not as a validated result.
 
-(Nothing from the `use_centering` hypothesis appears in this section --
-see the hypothesis note above; no code for it exists yet.)
+**Status:** HYPOTHESIS-ONLY. No code for this exists anywhere in the
+package — no `KernelConfig` field, no kernel branch in `gdn2_fwd.py` /
+`gdn2_bwd.py`, no `NotImplementedError` gate. Nothing below has been
+measured in this repository; it is written down here so the idea isn't
+lost or re-invented from scratch.
 
----
+**Why this is being tracked at all:** `KNOWN_LIMITATIONS.md` section 1/6
+identifies the pairwise decay computation in Kernel A
+(`build_chunk_scores_pallas`) and its backward counterpart B4
+(`intra_backward_pallas`) as VPU-bound (`_weighted_pair_sum` /
+`_dL_pair_sum` / `_dR_pair_sum` / `_dgc_pair_sum`: broadcast + elementwise
+multiply + manual reduction) rather than MXU-bound. In principle,
+centering the pairwise decay term `exp(gc_i - gc_j)` around a shared
+per-chunk reference point `gn` (e.g. `gn = gc[bt // 2]`) factors it into
+two real matmuls (`q_scaled @ k_scaled.T`) instead of a VPU reduction,
+which is the kind of change that could meaningfully close the forward gap
+described in `KNOWN_LIMITATIONS.md` section 2.
 
-## HYPOTHESIS-REJECTED
+**Precondition:** the fused forward currently sits at ~0.62x of pure-JAX
+WY (see `KNOWN_LIMITATIONS.md` section 2). An earlier hybrid path
+(JAX-forward + Pallas-backward) was investigated and **closed as
+HYPOTHESIS-REJECTED** — it did not deliver an end-to-end win. So this
+`use_centering` factorization is now the primary candidate direction for
+closing the forward gap, not a fallback.
 
-### Hybrid JAX-forward + Pallas-backward path (rejected 2026-09-27)
+**What "validating this hypothesis" would require, if pursued (none of
+this exists yet):**
+1. A from-scratch implementation of the centered factorization in
+   `_kernel_a_body`, gated behind a new, explicitly-named opt-in
+   `KernelConfig` field (with its own `NotImplementedError` safety gate,
+   matching how every other experimental knob in this codebase is
+   introduced) — not assumed to already exist.
+2. Isolated correctness test (vs. the default/non-centered path) and
+   isolated speed benchmark for Kernel A, then the same for the B4
+   backward counterpart, including the backward gradient contribution
+   through the shared reference point `gn` (chain rule through
+   `eq_i = exp(clip(gc_i - gn))`, `ek_j = exp(clip(gn - gc_j))`) —
+   this is exactly the kind of shared-variable backward term that is
+   easy to compute but easy to forget to write back; any implementation
+   must have an explicit isolated test for it, independently re-derived
+   (not copy-pasted from the forward kernel), before it is trusted.
+3. Full `custom_vjp` pipeline correctness (multi-seed vs.
+   `gdn2_token_serial_reference`, finite-difference, `wy_eps` damping
+   interaction, bf16 coverage, `KAGGLE_SMALL` blocking) — per the
+   layered strategy in `docs/TESTING_STRATEGY.md`.
+4. End-to-end fwd/bwd/fwdbwd wall-clock through
+   `gdn2_pallas_forward_trainable`, not just isolated kernel calls.
+5. Peak HBM (`run_memory_benchmark.py`) for the new path.
+6. A repeat of the kernel-gap diagnostic (sum of isolated per-kernel
+   timings vs. full pipeline) to rule out a new dispatch/scheduling gap
+   from the changed intermediate shapes.
 
-Investigated as an opt-in experimental path (originally `beta/gdn2_hybrid.py`).
-A full TPU attestation run showed no end-to-end (fwd+bwd) speedup over the
-fused Pallas path once measured correctly. Closed; not pursued further.
-Code archived at `archive/gdn2_hybrid.py`.
+**Do not** add a `use_centering` (or similarly named) field to
+`KernelConfig`, add branches to `_kernel_a_body`/`_kernel_b4_body`, or
+reference this hypothesis as an existing/gated/tested code path in
+`README.md`, `CHANGELOG.md`, or `KNOWN_LIMITATIONS.md` until steps 1–6
+above have actually been done. Until then this section is the only place
+in the repo where this idea should be mentioned.
 
 ---
 
@@ -167,7 +169,7 @@ On TPU v5e-8, H is a natural sharding axis (each chip holds H/8 heads
 locally; state is per-head independent, no cross-chip sync in the scan).
 The per-chip tile-pack sweet spot of 6 heads predicts a **global peak
 near H=48** (H_local = 6), with speedup roughly flat from H=32 to H=64.
-This is a prediction, not a measurement -- nothing below has been run.
+This is a prediction, not a measurement — nothing below has been run.
 
 **Plan:**
 - Mesh: `(8,)` shard over the `h` axis
@@ -179,7 +181,7 @@ This is a prediction, not a measurement -- nothing below has been run.
 
 **Why it might not peak at 48:**
 - `jax.lax.associative_scan` may behave differently under sharding
-  (all-gather on cross-chip state) -- could push the peak higher.
+  (all-gather on cross-chip state) — could push the peak higher.
 - ICI latency per chunk-scan sync could pull the peak lower.
 - 2D sharding (H x B) may be required to keep per-chip batch >= 2.
 
@@ -196,17 +198,18 @@ Not yet implemented or measured.
 
 **Status:** HYPOTHESIS-ONLY.
 
-Kernel-only scaling is what section above measures. End-to-end
+Kernel-only scaling is what the section above measures. End-to-end
 (`t_step(n_layers)`) sharded scaling is separate and not yet run.
-Prediction: E2E peaks earlier than the kernel (H ~ 24-32) because
+Prediction: E2E peaks earlier than the kernel (H ~ 24–32) because
 projections/MLP/optimizer do not scale with H, growing the Amdahl
 residual. Needs its own measurement before being stated as fact.
 
 ### Kernel A / B4 MXU factorization
 
-**Status:** HYPOTHESIS-ONLY** (unchanged from the existing entry above --
-see that section for the full precondition and validation gates before
-any code is written).
+See the `Research hypothesis: MXU-factorized pairwise decay` section
+above for the full precondition, gates, and status.
+
+---
 
 ## v0.4.0 — exploratory
 
@@ -227,6 +230,8 @@ Streaming tiled computation of the pairwise decay term (instead of
 materializing the full matrix per chunk) could reduce VMEM pressure and
 possibly enable larger `bs2`.
 
+---
+
 ## v0.5.0+ — research
 
 ### Forward-pass parity with pure-JAX WY
@@ -236,7 +241,7 @@ possibly enable larger `bs2`.
 Today the fused forward is ~0.62x of the pure-JAX WY reference (see
 `KNOWN_LIMITATIONS.md`). Two paths forward: (a) MXU factorization of
 Kernel A/B4, or (b) accept a pure-JAX forward + fused Pallas backward
-as the recommended trainable configuration -- noting that this is
+as the recommended trainable configuration — noting that this is
 exactly what the closed hybrid path attempted, and it did not deliver
 an end-to-end win under the chunking scheme tested. A different
 chunking scheme might still change that outcome; nothing here should
