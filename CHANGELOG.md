@@ -1,8 +1,37 @@
 # Changelog
 
-All notable user-facing changes to this project are documented here.
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.2.0] — 2026-09-27
+
+### Added — `atomic_gdn2` package
+- Unified mega-backward: B2+B1+B3+B4+B5 in one Pallas launch
+- T-22 numerical boundary documented (`half_span < 88`, `BTL_STOP=80`)
+- Test suite T1–T9 under `tests_gdn2/`
+- Reference implementations: `forward_ref`, `token_serial_ref`, `b4_exact_f64_np`
+- Tools `tools_gdn2/`: `bench.py`, `t0_diagnose.py`
+- Per-layer Amdahl decomposition (R² > 0.9999)
+
+### Fixed
+- O-1: removed clamp masks that gated `dgc`
+
+### Removed
+- `b4_dot_mode` config field. T4 phantom-parameter audit found no effect
+  for `diag='btl'` at proj_dim>=768. Removed rather than fixed.
+  B4 diagonal matmuls now always use `precision=HIGHEST`.
+- `beta/gdn2_hybrid.py` hybrid path. Closed as `HYPOTHESIS-REJECTED`.
+  Code preserved at `archive/gdn2_hybrid.py`.
+
+### Headline
+
+Kernel speedup vs `associative_scan` — direct measurement, single TPU v5e-1,
+B=4, D=128, `bs2=64`:
+
+| H | L=2048 | L=4096 |
+|---|--------|--------|
+| 2 | 193x | 207x |
+| 4 | 300x | 322x |
+| 6 | **468x** | **448x** |
+
+Speedup peaks at H=6 on a single chip; beyond H=6 requires sharding (TPU v5e-8).
 
 ## [Unreleased]
 

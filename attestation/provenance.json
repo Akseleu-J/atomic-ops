@@ -1,0 +1,13 @@
+{
+  "commit": "c6862ced7da70782",
+  "git_head": "f4ae2ca",
+  "date": "2026-09-27T06:51:37Z",
+  "hardware": "TPU v5e-1 (kernel bench + Amdahl), TPU v5e-8 (scaling)",
+  "jax": "0.11.2",
+  "libtpu": "0.0.48",
+  "python": "3.12.13",
+  "sources": [
+    "nb1..nb16b"
+  ],
+  "note": "final_report.json is aggregated; raw per-notebook logs not committed."
+}

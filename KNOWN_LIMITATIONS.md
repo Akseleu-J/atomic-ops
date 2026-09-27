@@ -15,8 +15,9 @@ An MXU-factorized alternative has been explored as an isolated, off-by-default e
 ## 2. Fused forward is slower than the pure-JAX WY forward
 
 **Status:** known performance gap, root cause now identified (see section
-6). Mitigated in (planned, unreleased) by an experimental hybrid path (section 5); real
-fix targeted for v0.2.0 (section 1).
+6). An experimental hybrid path was investigated (section 5) but did not
+deliver the expected end-to-end gain and has been closed. The real fix
+remains the Kernel A/B4 VPU-to-MXU factorization tracked in `ROADMAP.md`.
 
 **Numbers (TPU v5e-8, B=8, L=4096):** Pallas fwd 102.08 ms (FP32) / 101.51 ms
 (BF16) vs JAX_REF fwd 63.24 ms / 62.38 ms -- about 0.62x (i.e. Pallas is
@@ -64,78 +65,15 @@ for tuning alongside the `use_centering` fix in v0.2.0, but has not been
 benchmarked independently yet -- treat as a hypothesis, not a confirmed
 cause, until isolated.
 
-## 5. [NEW, (planned, unreleased), EXPERIMENTAL/BETA] Hybrid JAX-forward + Pallas-backward path
+## 5. [CLOSED] Hybrid JAX-forward + Pallas-backward path
 
-**Status:** landed in `beta/` as an opt-in experimental path, not wired
-into `model.py` or the public `gdn2_forward_trainable` dispatcher. Not a
-long-term architectural direction -- a stopgap pending section 1.
-**Target release: v0.1.5.** Isolated correctness/speed gates already pass
-(see numbers below); the remaining blocker before v0.1.5 is validating the
-path on a **real training run** (not just the isolated fwd+bwd benchmark),
-since only end-to-end training exercises long-run numerical stability that
-a single-batch gate cannot catch.
+**Status:** CLOSED, not pursued further. A full TPU attestation run showed
+it did not deliver the expected end-to-end (fwd+bwd) speedup over the
+fused Pallas path once measured correctly.
 
-**What it is:** forward uses a plain-JAX chunked-WY scan (same algorithm
-and residual layout as `gdn2_chunked_wy_reference`, but additionally
-returns the intermediate residuals -- `Aqk, Akk, A, w_pseudo, u, kg, qg,
-gc_last, h_pre_all, v_new_all` -- in the exact layout the existing Pallas
-backward kernels (B1-B5) expect), and backward reuses the fused Pallas
-B1-B5 chain unchanged, without recomputing forward.
+Closed as `HYPOTHESIS-REJECTED`; see `ROADMAP.md`. Code preserved at
+`archive/gdn2_hybrid.py` for reference.
 
-**Why it works:** JAX-forward is ~1.6x faster than Pallas-forward (see
-section 2), while the Pallas B1-B5 backward chain is already 2.6-3.9x
-faster than the JAX_REF backward (see README benchmarks). The hybrid
-combines the faster half of each path.
-
-**Measured speedup vs PALLAS_PROD (fwd+bwd, TPU v5e-8, FP32, median of 15
-iters):**
-
-| Config | JAX_REF (ms) | PALLAS_PROD (ms) | HYBRID (ms) | HYBRID vs PALLAS_PROD |
-| --- | --- | --- | --- | --- |
-| KAGGLE_SMALL (B=4, L=2048) | 119.53 | 30.74 | 26.30 | 1.17x |
-| KAGGLE_MEDIUM (B=4, L=4096) | 268.53 | 87.51 | 77.27 | 1.13x |
-| train shape (B=8, L=4096) | 459.94 | 173.97 | 137.03 | 1.27x |
-
-Gradient correctness gate (finite-diff + tol=5e-2 vs JAX_REF autodiff):
-PASSED, all tensors finite.
-
-**Known gaps before this can be considered release-ready (not yet
-closed as of this writing):**
-- **Residual-parity test missing.** All current gates compare final
-  outputs/gradients through a full loss, not the individual residual
-  tensors (`Aqk, Akk, A, w_pseudo, u, kg, qg, h_pre_all, v_new_all`)
-  element-by-element against the Pallas-forward-produced residuals. Given
-  that B1-B5 were only ever tested against Pallas-forward residuals, a
-  silent layout/dtype mismatch in the JAX-forward residual harvesting
-  could pass the coarse gradient gate while being subtly wrong. This is
-  the single highest-priority item before wider review.
-- **`jax.checkpoint(chunk_step)` left in the hybrid forward scan.** It has
-  no effect here (backward does not re-differentiate through this scan --
-  residuals are consumed directly by `custom_vjp`'s explicit backward
-  rule), so it should be removed; leaving it in reads as unintentional to
-  a reviewer.
-- **No isolated (forward-excluded) backward-only comparison published
-  yet.** The fwd/bwd split in the speed table above double-counts forward
-  cost inside the naive `jax.vjp(loss, ...)`-based "bwd" column (this was
-  independently confirmed via the kernel-gap diagnostic in section 6:
-  Δfwd and Δbwd between PALLAS_PROD and HYBRID track almost exactly). The
-  fwd+bwd total is valid; the fwd/bwd split as currently presented is not
-  and should be re-measured via a direct call to the backward rule on
-  pre-computed residuals before publishing outside this repo.
-- **No BF16 numbers yet.** All hybrid numbers above are FP32 only; BF16 is
-  the production training dtype.
-- **No memory (peak HBM) numbers yet.** `benchmarks/run_memory.py` does
-  not yet have a `"HYBRID"` path entry.
-- **KAGGLE_LARGE (clip=5e3) not yet benchmarked** for the hybrid path.
-- **Full deep-correctness suite not yet run.** Only a coarse finite-diff
-  gate has been checked so far; multi-seed sweep against
-  `gdn2_token_serial_reference` (the derivation-independent reference, per
-  `docs/TESTING_STRATEGY.md` Layer 2/3) is still pending.
-
-**Recommended framing for the v0.1.5 release:** ship as `beta/`, explicitly
-labeled experimental, not default-wired, pending the items above -- most
-importantly the real-training validation run. Do not recommend for
-production training pipelines until that run is published.
 
 ## 6. Kernel-gap diagnostic (TPU v5e-8, KAGGLE_MEDIUM, B=8 L=4096, FP32)
 
@@ -200,31 +138,67 @@ sufficient to reject the dispatch-overhead hypothesis.
 
 ## Roadmap
 
-**(planned, unreleased) (current):**
-- Ship `beta/` hybrid JAX-forward + Pallas-backward path as opt-in,
-  experimental, not wired into `model.py`. See section 5 for exact status
-  and open items.
-- Document this file's findings (this update).
+**Status as of v0.2.0:** the experimental hybrid JAX-forward +
+Pallas-backward path (formerly `beta/gdn2_hybrid.py`) was investigated,
+attested end-to-end on real TPU, and **closed as HYPOTHESIS-REJECTED** —
+it did not deliver the expected fwd+bwd speedup once measured correctly.
+It is not planned, not wired into anything, and not a recommended path.
+Code is preserved for reference at `archive/gdn2_hybrid.py`.
+See `ROADMAP.md` ("HYPOTHESIS-REJECTED" section) for the full writeup.
 
-**v0.2.0 (planned):**
-- Validate the section 5 hybrid path fully end-to-end (see its open
-  items list); this is a precondition, not optional.
-- Only if the hybrid path does not fully close the fwd/bwd gap: prototype
-  and validate the `use_centering` MXU-factorization hypothesis from
-  scratch (see `ROADMAP.md` -- no code for it exists yet), including its
-  own isolated correctness/speed tests and the full deep-correctness
-  suite (`tests/extended/test_gdn2_deep_correctness.py`).
-- If validated and shown to close most of the forward gap: this becomes
-  the primary fix, and the section 5 hybrid path is downgraded to a
-  documented alternative rather than the default recommendation.
-- Independently investigate Kernel B (`wy_solve_pallas`, `MB=16`
-  sub-tile solve) via `cost_analysis()` and a micro-block-size sweep --
-  not yet confirmed to share the same root cause as Kernel A/B4.
-- Close the open items under section 5 (residual-parity test, remove
-  stray `jax.checkpoint`, isolated bwd-only speed table, BF16 numbers,
-  memory numbers, KAGGLE_LARGE coverage, multi-seed sweep) regardless of
-  whether the hybrid remains a recommended path, since `beta/` code should
-  still meet the project's normal evidentiary bar before any wider
-  promotion.
+Forward-looking work (Kernel A/B4 MXU factorization, Kernel B `mb`
+sub-tile tuning, sharded H-scaling) is tracked exclusively in
+`ROADMAP.md` under v0.3.0+ — not duplicated here, to avoid this file and
+`ROADMAP.md` drifting out of sync again.
 
 > **Note on bwd vs fwd+bwd timings:** the `bwd` column is measured via `jax.vjp(loss, ...)`, which re-runs the forward pass internally to build the VJP closure before the backward pass executes. This is why `bwd` and `fwdbwd` numbers are nearly identical in the tables above/below -- it is an artifact of the measurement method (the forward cost is unavoidably included in both), not a claim that backward alone costs the same as forward+backward combined.
+
+## Single-chip tile-pack limit at H=6
+
+**Status:** hardware sweet spot, not a kernel bug.
+
+On a single TPU v5e-1, the fused kernel's tile pack (`bs2=64`) fits
+cleanly up to 6 heads. Kernel speedup vs `associative_scan` peaks there:
+
+| H | L=2048 | L=4096 |
+|---|--------|--------|
+| 2 | 193x | 207x |
+| 4 | 300x | 322x |
+| 6 | **468x** | **448x** |
+
+Beyond H=6 the fused tile no longer fits cleanly on a single chip and
+speedup drops. This is a property of the single-chip VMEM/MXU budget,
+not of the algorithm. Meaningful scaling beyond H=6 requires sharding
+across chips (TPU v5e-8). See `ROADMAP.md` for the sharded-scaling plan.
+
+## Per-layer slope decomposition is invalid at B=4
+
+**Status:** methodology limitation, documented for reproducibility.
+
+The per-layer Amdahl decomposition (`b_X - b_NONE` from a
+`t_step(n_layers)` fit, `X in {NEW, OLD, PROD}`) requires a valid
+zero-baseline. The `NONE` reference is an elementwise stub that touches
+all 6 inputs but does not run attention.
+
+At B=8 the method works (see `attestation/final_report.json`,
+`8.decomposition`): `b_NONE ~ 5.78 ms/layer`, `b_NEW ~ 9.06`,
+`b_OLD ~ 1668.33` — differences are positive and meaningful.
+
+At B=4 the method is expected to **fail structurally**: the `NONE` stub
+materializes more intermediate tensors than the fused kernel at that
+batch size, which can push `b_NONE > b_NEW` and make the decomposed
+`kernel_share` meaningless (not merely noisy). The published H-scaling
+table in `README.md` / `attestation/scaling.json` therefore reports only
+**direct kernel fwd+bwd measurements** at B=4, never slope-decomposed
+numbers — the two should not be mixed in the same table.
+
+## Cross-config numbers are not comparable without saying so
+
+**Status:** reporting discipline note.
+
+Speedup figures measured at different `(B, L, H)` shapes are not
+directly comparable and must not be used to extrapolate across shapes.
+Example: `attestation/final_report.json`'s per-layer slope numbers were
+measured at B=8; the headline H-scaling table in `README.md` /
+`attestation/scaling.json` is measured at B=4. Both are correct in
+their own regime; neither supersedes or validates the other.

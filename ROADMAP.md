@@ -138,3 +138,119 @@ milestone with a date.
 
 (Nothing from the `use_centering` hypothesis appears in this section --
 see the hypothesis note above; no code for it exists yet.)
+
+---
+
+## HYPOTHESIS-REJECTED
+
+### Hybrid JAX-forward + Pallas-backward path (rejected 2026-09-27)
+
+Investigated as an opt-in experimental path (originally `beta/gdn2_hybrid.py`).
+A full TPU attestation run showed no end-to-end (fwd+bwd) speedup over the
+fused Pallas path once measured correctly. Closed; not pursued further.
+Code archived at `archive/gdn2_hybrid.py`.
+
+---
+
+## v0.3.0 — planned
+
+### Sharded H-scaling on TPU v5e-8
+
+**Status:** VALIDATED-HYPOTHESIS, not yet run.
+
+Single-chip measurements on TPU v5e-1 (B=4, D=128, `bs2=64`) show kernel
+speedup peaks at H=6 (468x at L=2048, 448x at L=4096) because the fused
+kernel's tile pack fits cleanly up to 6 heads, after which it stops
+fitting and speedup drops.
+
+On TPU v5e-8, H is a natural sharding axis (each chip holds H/8 heads
+locally; state is per-head independent, no cross-chip sync in the scan).
+The per-chip tile-pack sweet spot of 6 heads predicts a **global peak
+near H=48** (H_local = 6), with speedup roughly flat from H=32 to H=64.
+This is a prediction, not a measurement -- nothing below has been run.
+
+**Plan:**
+- Mesh: `(8,)` shard over the `h` axis
+- Config: B=4 (or B=2 if HBM-bound), L=2048, `bs2=64`, D=128
+- Sweep: H in {16, 24, 32, 48, 64}
+- Baseline: same `associative_scan` OLD at identical mesh
+- Success criterion: kernel speedup at H=48 >= 400x with correctness
+  `rel_l2(NEW, JAX_REF) < 5e-2`
+
+**Why it might not peak at 48:**
+- `jax.lax.associative_scan` may behave differently under sharding
+  (all-gather on cross-chip state) -- could push the peak higher.
+- ICI latency per chunk-scan sync could pull the peak lower.
+- 2D sharding (H x B) may be required to keep per-chip batch >= 2.
+
+### 2D sharding (H x B) exploration
+
+**Status:** HYPOTHESIS-ONLY.
+
+At large H with B=4, H-only sharding leaves per-chip batch = 4/B_shard.
+For `bs2=64` granularity, per-chip batch >= 2 is preferred. Candidate
+meshes with `H_shard * B_shard = 8`: (8,1), (4,2), (2,4), (1,8).
+Not yet implemented or measured.
+
+### E2E scaling on sharded setup
+
+**Status:** HYPOTHESIS-ONLY.
+
+Kernel-only scaling is what section above measures. End-to-end
+(`t_step(n_layers)`) sharded scaling is separate and not yet run.
+Prediction: E2E peaks earlier than the kernel (H ~ 24-32) because
+projections/MLP/optimizer do not scale with H, growing the Amdahl
+residual. Needs its own measurement before being stated as fact.
+
+### Kernel A / B4 MXU factorization
+
+**Status:** HYPOTHESIS-ONLY** (unchanged from the existing entry above --
+see that section for the full precondition and validation gates before
+any code is written).
+
+### Re-validate the B=8 507x slope-decomposition figure
+
+**Status:** DATA-INCONSISTENT, not yet resolved.
+
+An internal B=8, L=2048, H=4, single-chip run reported 507x via
+per-layer slope decomposition (see `attestation/final_report.json`,
+`8.amdahl_layerwise.vs_OLD`). At B=4 the same method fails structurally
+(see `KNOWN_LIMITATIONS.md`), so the two figures are not comparable and
+507x must not be quoted next to the B=4 headline table. Re-running the
+decomposition cleanly at B=8 (with an explicit note on which batch size
+it applies to) would let this be published as its own, correctly
+scoped, result instead of sitting as an internal-only number.
+
+## v0.4.0 — exploratory
+
+### Multi-chip chunk-scan (pipeline parallel)
+
+**Status:** HYPOTHESIS-ONLY, not designed.
+
+`num_chunks` is another natural sharding axis: chunks depend on each
+other only through the recurrent state. Pipeline-parallel chunk-scan
+across chips could allow much longer sequences (L=16384+) without
+increasing per-chip memory.
+
+### Flash-attention-style pairwise decay
+
+**Status:** HYPOTHESIS-ONLY, not designed.
+
+Streaming tiled computation of the pairwise decay term (instead of
+materializing the full matrix per chunk) could reduce VMEM pressure and
+possibly enable larger `bs2`.
+
+## v0.5.0+ — research
+
+### Forward-pass parity with pure-JAX WY
+
+**Status:** open question, contingent on v0.3.0 items above.
+
+Today the fused forward is ~0.62x of the pure-JAX WY reference (see
+`KNOWN_LIMITATIONS.md`). Two paths forward: (a) MXU factorization of
+Kernel A/B4, or (b) accept a pure-JAX forward + fused Pallas backward
+as the recommended trainable configuration -- noting that this is
+exactly what the closed hybrid path attempted, and it did not deliver
+an end-to-end win under the chunking scheme tested. A different
+chunking scheme might still change that outcome; nothing here should
+be read as re-opening the closed hybrid path without new evidence.

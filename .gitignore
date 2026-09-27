@@ -66,3 +66,6 @@ benchmarks/*.pdf
 fix_repo_and_commits.sh
 fix_pip_install_name.sh
 sync_roadmap_docs.sh
+
+# internal scripts replaced by tools/*.py
+*.sh

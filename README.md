@@ -1,5 +1,28 @@
 # atomic_ops
 
+## Packages
+
+This repository ships **two generations** of GDN-2 Pallas kernels:
+
+### `atomic_ops` v0.1.0 — stable
+Fused forward + backward GDN-2 kernels. **10–39×** faster than
+`associative_scan`. PyPI published.
+
+### `atomic_gdn2` v0.2.0 — next generation (shipped inside `atomic-ops` 0.2.0)
+- Unified **mega-backward** (B2+B1+B3+B4+B5 in one Pallas launch)
+- **T-22 numerical boundary** documented (`half_span < 88`)
+- **9 specialized tests** (T1–T9) — finite differences, domain guard,
+  canary, phantom-param audit
+- Zero-shot MQAR to **2048 tokens** at 0.9995
+
+```bash
+pip install -e .
+pytest tests_gdn2/ -v -m "not slow"
+```
+
+> `atomic_gdn2` is research-grade. `atomic_ops` remains stable production path.
+
+
 **Fused Gated DeltaNet-2 (GDN-2) kernels for TPU v5e, written in JAX/Pallas.**
 <p align="center">
   <a href="https://pypi.org/project/atomic-ops/">
@@ -22,14 +45,32 @@
 ---
 
 A from-scratch port of the [NVlabs Gated DeltaNet-2](https://github.com/NVlabs/GatedDeltaNet-2) Triton kernels to `jax.experimental.pallas`, targeting **TPU v5e-8**. The backward pass is implemented as a single fused `custom_vjp` that reuses forward residuals instead of recomputing them.
-> **Headline numbers (measured, see [Benchmarks](#-benchmarks)):** on the full training shape
-> (batch 8, seq 4096, 6 heads, d_head 128) the fused backward makes the training step
-> **2.6× (FP32) / 3.4× (BF16) faster than the best pure-JAX WY baseline** and
-> **27.2× (FP32) / 13.3× (BF16) faster than the widely used `associative_scan` baseline**.
-> Across all measured shapes the gain vs `associative_scan` reaches **up to 38.8×** (FP32).
-> The fused forward alone is currently **~1.6× slower** than the pure-JAX WY forward on TPU —
-> training steps are backward-dominated, so end-to-end is still a clear win.
-> A hybrid `JAX forward + Pallas backward` mode is planned (see [Limitations](#-limitations)).
+**Kernel speedup vs `associative_scan`** — direct measurement, single TPU v5e-1,
+B=4, D=128, `bs2=64`:
+
+| H | L=2048 | L=4096 |
+|---|--------|--------|
+| 2 | 193x | 207x |
+| 4 | 300x | 322x |
+| 6 | **468x** | **448x** |
+
+Correctness: `rel_l2(NEW, JAX_REF) = 2.5e-06` at H in {4,6}, L=2048.
+
+Speedup grows with head count and peaks at H=6 on a single chip: the fused
+kernel's tile pack (`bs2=64`) fits cleanly up to 6 heads, while
+`associative_scan` pays an O(H*L*d^2) materialization cost that grows
+linearly with H. **Beyond H=6 the fused tile stops fitting cleanly on a
+single chip and sharding across chips (TPU v5e-8) is required for
+meaningful further scaling.** A sharded H>6 study is future work.
+
+**v0.1.0 (`atomic_ops`, released):** 2.6x (FP32) / 3.4x (BF16) vs best
+pure-JAX WY baseline; 27.2x vs `associative_scan` on train shape
+(B=8, L=4096, H=6, D=128); peak 38.8x on the smaller KAGGLE_SMALL preset
+(B=4, L=2048).
+
+**Other v0.2.0 results:** 145/146 correctness gates PASS; MQAR 0.9999 easy /
+0.9986 hard / 0.9995 zero-shot @ 2048; scaling 6M->142M monotone on enwik8;
+T-22 numerical boundary documented (`half_span < 88`).
 
 ---
 
@@ -51,14 +92,19 @@ Kaggle TPU v5e (`KAGGLE_SMALL` / `KAGGLE_MEDIUM` / `KAGGLE_LARGE`) and an
 ## Installation
 
 ```bash
+# atomic-ops >= 0.2.0 ships BOTH packages from one PyPI distribution
 pip install atomic-ops
 
-# or from source
-pip install git+https://github.com/Akseleu-J/atomic-ops.git
+# atomic_ops   -> stable, v0.1.x-generation kernels
+# atomic_gdn2  -> research-grade, v0.2.0-generation kernels
+# both are importable right after the single install above.
 
-# development
+# For editable / from-source development instead:
 git clone https://github.com/Akseleu-J/atomic-ops.git
-cd atomic_ops
+cd atomic-ops
+pip install -e .
+
+# TPU stack (v5e)
 pip install jax==0.11.1 jaxlib==0.11.1 libtpu==0.0.46 flax==0.12.9 optax==0.2.4
 ```
 
@@ -66,6 +112,23 @@ Requires Python ≥ 3.10 and `jax>=0.4.20`. For TPU, install the matching `jaxli
 builds (see [JAX TPU installation](https://jax.readthedocs.io/en/latest/installation.html)).
 
 ## Quick start
+
+### v0.2.0 (`atomic_gdn2`)
+
+```python
+from atomic_gdn2 import make_cfg, make_blr_trainable
+import jax.numpy as jnp, math
+
+cfg = make_cfg()                                   # bt=128, bs2=32, BTL
+fn  = make_blr_trainable(cfg, 1.0 / math.sqrt(128))
+
+B, H, L, D = 8, 6, 2048, 128
+q, k, v = (jnp.ones((B, H, L, D), jnp.float32) for _ in range(3))
+w = jnp.ones_like(q); b = 0.5 * jnp.ones_like(q); g = -0.05 * jnp.ones_like(q)
+o, h_final = fn(q, k, v, w, b, g)
+```
+
+### v0.1.0 (`atomic_ops`)
 
 ```python
 import jax.numpy as jnp
@@ -100,7 +163,7 @@ Optax training step: a `GDN2Layer` module that projects `x` into `q,k,v,w,b,g`,
 applies the gate via `-softplus(g)` (keeps `g <= 0`), auto-picks a config with
 `get_recommended_config`, and runs one AdamW update step.
 
-- [`notebooks/gdn2-with-atomic-ops-guide.ipynb`](notebooks/gdn2-with-atomic-ops-guide.ipynb) — a full Kaggle TPU v5e-8 guide notebook: installs `atomic-ops` from PyPI and trains a ~70M-parameter byte-level GDN-2 language model on enwik8, with a working data-parallel mesh setup, plateau-adaptive LR schedule, checkpointing, and a real published run (best val bpb, wall-clock time).
+
 
 ```bash
 python examples/minimal_usage.py       # forward+backward, prints backend + shapes
@@ -177,29 +240,31 @@ recomputing them). Details:
 
 ## Citation
 
-If you use this software, benchmark results, or kernels in your work, please
-cite the v0.1.0 release:
+**v0.1.0 (`atomic_ops`, published, Zenodo DOI):**
 
 ```bibtex
 @software{akseleu_atomic_ops_2026,
-  author  = {Omirbay Akseleu},
-  title   = {Atomic Ops: Fused Gated DeltaNet-2 Kernels for TPU v5e in JAX/Pallas},
-  year    = {2026},
-  version = {v0.1.0},
+  author    = {Omirbay Akseleu},
+  title     = {Atomic Ops: Fused Gated DeltaNet-2 Kernels for TPU v5e in JAX/Pallas},
+  year      = {2026},
+  version   = {v0.1.0},
   publisher = {Zenodo},
-  doi     = {10.5281/zenodo.22706659},
-  url     = {[https://doi.org/10.5281/zenodo.22706659](https://doi.org/10.5281/zenodo.22706659)}
+  doi       = {10.5281/zenodo.22706659},
+  url       = {https://doi.org/10.5281/zenodo.22706659}
 }
 ```
-### Reproduce
 
-```bash
-python benchmarks/run_speed_benchmark.py     # writes JSON + markdown tables
-python benchmarks/run_memory_benchmark.py    # fork-isolated peak HBM measurement
+**v0.2.0 (`atomic_gdn2`, in development, source only):**
+
+```bibtex
+@software{akseleu_atomic_gdn2_2026,
+  author  = {Omirbay Akseleu},
+  title   = {atomic_gdn2: Next-generation GDN-2 Pallas kernels for TPU v5e},
+  year    = {2026},
+  version = {v0.2.0},
+  url     = {https://github.com/Akseleu-J/atomic-ops}
+}
 ```
-
-Every timing run is correctness-gated before measurement (Pallas output must match the reference
-within tolerance, otherwise the row is rejected).
 
 ## Correctness & testing
 
@@ -227,8 +292,9 @@ alternative `KAGGLE_SMALL` blocking:
 - **TPU-only fused kernels.** The Pallas path assumes TPU MXU tiling and `d_head = 128`;
 other backends/dtypes automatically fall back to the pure-JAX reference (slower, correct).
 - **Fused forward is currently slower than the pure-JAX WY forward** (~0.6×). If your workload
-is inference-only, use `gdn2_forward` / `gdn2_chunked_wy_reference` until the hybrid
-`JAX forward + Pallas backward` mode lands (planned for v0.3.0).
+is inference-only, use `gdn2_forward` / `gdn2_chunked_wy_reference`. The experimental
+hybrid `JAX forward + Pallas backward` path was closed in v0.2.0
+(`HYPOTHESIS-REJECTED`, see `ROADMAP.md`).
 - `seq_len` must be divisible by `config.bt` (256 by default, 128 for `KAGGLE_SMALL`).
 - `KernelConfig.bt` must equal `2 * config.bc`; vary `mb` for solver granularity.
 - The pairwise decay computation (Kernel A / B4) currently uses a VPU-bound broadcast-reduce
@@ -249,22 +315,25 @@ GDN2_FWD_DIAG=1 python your_training_script.py
 
 ```javascript
 atomic_ops/
-├── atomic_ops/                  # the package
-│   ├── configs.py               # KernelConfig, presets, sanitize/validate helpers
-│   ├── gdn2_fwd.py              # forward kernels: A (scores), B (WY solve), C (recompute), D (scan)
-│   ├── gdn2_bwd.py              # backward kernels B1–B5
-│   ├── gdn2_pipeline.py         # custom_vjp trainable wrapper
-│   ├── reference.py             # token-serial + chunked-WY pure-JAX references
-│   ├── fallback.py              # auto-dispatch (TPU+d_head=128 -> Pallas, else reference)
-│   └── utils.py                 # is_tpu_available, estimate_memory, get_recommended_config
-├── benchmarks/                  # speed & memory benchmarks + raw results
-├── tests/                       # CPU smoke tests
-│   └── extended/                # full TPU correctness suite
-├── examples/                    # minimal_usage.py + Flax training step
-├── docs/TESTING_STRATEGY.md     # why the tests are built this way
-└── .github/workflows/           # CI (tests, lint), publish to PyPI
-```
-
+├── atomic_ops/                  # v0.1.0 stable
+│   ├── configs.py
+│   ├── gdn2_fwd.py
+│   ├── gdn2_bwd.py
+│   ├── gdn2_pipeline.py
+│   ├── reference.py
+│   └── fallback.py
+├── atomic_gdn2/                 # v0.2.0 next generation
+│   ├── config.py                # BLRConfig
+│   ├── fwd/                     # scores, solve, cd_slim
+│   ├── bwd/                     # b4, mega (unified backward)
+│   ├── reference/               # forward_ref, token_serial_ref
+│   ├── training/                # model, data, train, canary
+│   └── pipeline.py              # make_blr_trainable
+├── benchmarks/                  # speed / memory
+├── tests/                       # atomic_ops CPU smoke
+├── tests_gdn2/                  # atomic_gdn2 (T1–T9)
+├── docs/ATTESTATION.md          # v0.2.0 numbers
+└── .github/workflows/           # CI
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). In short: `pytest tests/test_gdn2_full_math_correctness.py`
@@ -273,18 +342,6 @@ must pass, Ruff must be green, kernel changes require the full TPU suite referen
 ## License
 
 MIT — see [LICENSE](LICENSE). Kernels ported from the NVlabs Gated DeltaNet-2 Triton reference.
-
-## Citation
-
-```bibtex
-@software{atomic_ops,
-  author = {Omirbay, Akseleu},
-  title  = {atomic_ops: Fused Gated DeltaNet-2 kernels for TPU v5e in JAX/Pallas},
-  url    = {https://github.com/Akseleu-J/atomic-ops},
-  license = {MIT},
-  year   = {2026}
-}
-```
 
 ## Support
 

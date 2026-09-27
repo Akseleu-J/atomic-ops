@@ -1,0 +1,1675 @@
+{
+  "ts": "2026-09-27T06:51:37.349638",
+  "nb_sources": {
+    "nb1": {
+      "commit": "b5d408ac7329",
+      "commit_hash": "c6862ced7da70782",
+      "jax": "0.11.2",
+      "backend": "tpu",
+      "ndev": 1,
+      "python": "3.13.15",
+      "libtpu": "0.0.48"
+    },
+    "nb10": {
+      "commit": "b5d408ac7329",
+      "commit_hash": "c6862ced7da70782",
+      "jax": "0.11.2",
+      "backend": "tpu",
+      "ndev": 8,
+      "python": "3.12.13",
+      "libtpu": "0.0.48"
+    },
+    "nb11": {
+      "commit": "b5d408ac7329",
+      "commit_hash": "c6862ced7da70782",
+      "jax": "0.11.2",
+      "backend": "tpu",
+      "ndev": 1,
+      "python": "3.13.15",
+      "libtpu": "0.0.48"
+    },
+    "nb12": {
+      "commit": "b5d408ac7329",
+      "commit_hash": "c6862ced7da70782",
+      "jax": "0.11.2",
+      "backend": "tpu",
+      "ndev": 1,
+      "python": "3.13.15",
+      "libtpu": "0.0.48"
+    },
+    "nb13": {
+      "commit": "b5d408ac7329",
+      "commit_hash": "c6862ced7da70782",
+      "jax": "0.11.2",
+      "backend": "tpu",
+      "ndev": 1,
+      "python": "3.13.15",
+      "libtpu": "0.0.48"
+    },
+    "nb16": {
+      "commit": "b5d408ac7329",
+      "commit_hash": "c6862ced7da70782",
+      "jax": "0.11.2",
+      "backend": "tpu",
+      "ndev": 1,
+      "python": "3.13.15",
+      "libtpu": "0.0.48"
+    },
+    "nb16b": {
+      "commit": "b5d408ac7329",
+      "commit_hash": "c6862ced7da70782",
+      "jax": "0.11.2",
+      "backend": "tpu",
+      "ndev": 1,
+      "python": "3.13.15",
+      "libtpu": "0.0.48"
+    },
+    "nb2": {
+      "commit": "b5d408ac7329",
+      "commit_hash": "c6862ced7da70782",
+      "jax": "0.11.2",
+      "backend": "tpu",
+      "ndev": 1,
+      "python": "3.13.15",
+      "libtpu": "0.0.48"
+    },
+    "nb3": {
+      "commit": "b5d408ac7329",
+      "commit_hash": "c6862ced7da70782",
+      "jax": "0.11.2",
+      "backend": "tpu",
+      "ndev": 1,
+      "python": "3.13.15",
+      "libtpu": "0.0.48"
+    },
+    "nb4": {
+      "commit": "b5d408ac7329",
+      "commit_hash": "c6862ced7da70782",
+      "jax": "0.11.2",
+      "backend": "tpu",
+      "ndev": 8,
+      "python": "3.12.13",
+      "libtpu": "0.0.48"
+    },
+    "nb5": {
+      "commit": "b5d408ac7329",
+      "commit_hash": "c6862ced7da70782",
+      "jax": "0.11.2",
+      "backend": "tpu",
+      "ndev": 8,
+      "python": "3.12.13",
+      "libtpu": "0.0.48"
+    },
+    "nb7": {
+      "commit": "b5d408ac7329",
+      "commit_hash": "c6862ced7da70782",
+      "jax": "0.11.2",
+      "backend": "tpu",
+      "ndev": 1,
+      "python": "3.13.15",
+      "libtpu": "0.0.48"
+    },
+    "nb8": {
+      "commit": "b5d408ac7329",
+      "commit_hash": "c6862ced7da70782",
+      "jax": "0.11.2",
+      "backend": "tpu",
+      "ndev": 8,
+      "python": "3.12.13",
+      "libtpu": "0.0.48"
+    },
+    "nb9": {
+      "commit": "b5d408ac7329",
+      "commit_hash": "c6862ced7da70782",
+      "jax": "0.11.2",
+      "backend": "tpu",
+      "ndev": 1,
+      "python": "3.13.15",
+      "libtpu": "0.0.48"
+    },
+    "nb_hbm": {
+      "commit": "b5d408ac7329",
+      "commit_hash": "c6862ced7da70782",
+      "jax": "0.11.2",
+      "backend": "tpu",
+      "ndev": 1,
+      "python": "3.13.15",
+      "libtpu": "0.0.48"
+    },
+    "nb_scale": {
+      "commit": "b5d408ac7329",
+      "commit_hash": "c6862ced7da70782",
+      "jax": "0.11.2",
+      "backend": "tpu",
+      "ndev": 1,
+      "python": "3.13.15",
+      "libtpu": "0.0.48"
+    }
+  },
+  "cells": {
+    "0.dryrun": {
+      "ts": 1790491871.0067067,
+      "payload": {
+        "status": "PASS"
+      }
+    },
+    "1.1": {
+      "ts": 1790491871.0030596,
+      "payload": {
+        "status": "PASS",
+        "rel_l2": 0.0001468
+      }
+    },
+    "1.2": {
+      "ts": 1790491871.0030596,
+      "payload": {
+        "status": "PASS",
+        "Aqk": 2.401e-06,
+        "Akk": 2.376e-06
+      }
+    },
+    "1.3": {
+      "ts": 1790491871.0030596,
+      "payload": {
+        "status": "PASS",
+        "rel_l2": 0.2
+      }
+    },
+    "1.4": {
+      "ts": 1790491871.0030596,
+      "payload": {
+        "status": "PASS",
+        "rel_l2": 5.763e-05
+      }
+    },
+    "1.6": {
+      "ts": 1790491871.0030596,
+      "payload": {
+        "status": "PASS",
+        "worst": 2.506e-06
+      }
+    },
+    "1.7": {
+      "ts": 1790491871.0030596,
+      "payload": {
+        "status": "PASS",
+        "rel_l2": 0.2
+      }
+    },
+    "1.15.benign_seed0": {
+      "ts": 1790491871.0030596,
+      "payload": {
+        "status": "PASS",
+        "worst": 1.063e-05
+      }
+    },
+    "1.15.benign_seed1": {
+      "ts": 1790491871.0030596,
+      "payload": {
+        "status": "PASS",
+        "worst": 1.219e-05
+      }
+    },
+    "1.15.strong_decay": {
+      "ts": 1790491871.0030596,
+      "payload": {
+        "status": "PASS",
+        "worst": 3.427e-05
+      }
+    },
+    "1.15.near_zero": {
+      "ts": 1790491871.0030596,
+      "payload": {
+        "status": "PASS",
+        "worst": 8.615e-06
+      }
+    },
+    "1.15.b_near_one": {
+      "ts": 1790491871.0030596,
+      "payload": {
+        "status": "PASS",
+        "worst": 1.84e-05
+      }
+    },
+    "1.15.large_k_stable": {
+      "ts": 1790491871.0030596,
+      "payload": {
+        "status": "PASS",
+        "worst": 2.435e-05
+      }
+    },
+    "1.15.summary": {
+      "ts": 1790491871.0030596,
+      "payload": {
+        "status": "PASS",
+        "worst_all": 3.427e-05
+      }
+    },
+    "1.16": {
+      "ts": 1790491871.0030596,
+      "payload": {
+        "status": "PASS",
+        "rel": 0.0006531,
+        "tol": 0.005,
+        "serial_rel": 1.363e-10,
+        "kernel_rel": 0.0006531,
+        "note": "aggregate; serial=1.363e-10 (fp64), kernel=6.531e-04 (bf16x3)"
+      }
+    },
+    "1.16.serial": {
+      "ts": 1790491871.0030596,
+      "payload": {
+        "status": "PASS",
+        "an": -0.2009834,
+        "fd": -0.2009834,
+        "rel": 1.363e-10,
+        "tol": 5e-05,
+        "eps": 1e-06
+      }
+    },
+    "1.16.kernel": {
+      "ts": 1790491871.0030596,
+      "payload": {
+        "status": "PASS",
+        "an": -0.2010343,
+        "fd": -0.2011657,
+        "rel": 0.0006531,
+        "tol": 0.002,
+        "eps": 0.0001
+      }
+    },
+    "1.16.cross": {
+      "ts": 1790491871.0030596,
+      "payload": {
+        "status": "INFO",
+        "rel": 0.0002532
+      }
+    },
+    "1.16.summary": {
+      "ts": 1790491871.0030596,
+      "payload": {
+        "status": "PASS",
+        "serial_rel": 1.363e-10,
+        "kernel_rel": 0.0006531,
+        "cross_rel": 0.0002532,
+        "eps_serial": 1e-06,
+        "eps_kernel": 0.0001
+      }
+    },
+    "1.16.methodology": {
+      "ts": 1790491871.0030596,
+      "payload": {
+        "status": "INFO"
+      }
+    },
+    "1.17.b4dot_rootcause": {
+      "ts": 1790491871.0030596,
+      "payload": {
+        "status": "INFO",
+        "diag_btl_uses_dot_param": true,
+        "diag_lean_uses_dot_param": false,
+        "sweep": [
+          {
+            "bt": 128,
+            "bs2": 32,
+            "rel": 3.991e-06,
+            "verdict": "PHANTOM"
+          },
+          {
+            "bt": 128,
+            "bs2": 16,
+            "rel": 5.35e-06,
+            "verdict": "PHANTOM"
+          },
+          {
+            "bt": 64,
+            "bs2": 16,
+            "rel": 3.708e-06,
+            "verdict": "PHANTOM"
+          },
+          {
+            "bt": 128,
+            "bs2": 64,
+            "rel": 3.897e-06,
+            "verdict": "PHANTOM"
+          }
+        ],
+        "note": "b4_dot_mode phantom: _diag_btl uses passed dot, _diag_lean ignores it entirely"
+      }
+    },
+    "1.99": {
+      "ts": 1790491871.0030596,
+      "payload": {
+        "status": "PASS",
+        "n_pass": 17,
+        "n_fail": 0
+      }
+    },
+    "10.1.kernel_b_identity": {
+      "ts": 1790491871.0070107,
+      "payload": {
+        "status": "PASS",
+        "rel_l2": 0.000186
+      }
+    },
+    "10.2.kernel_ab_parity": {
+      "ts": 1790491871.0070107,
+      "payload": {
+        "status": "PASS",
+        "Aqk": 2.475e-06,
+        "Akk": 2.451e-06
+      }
+    },
+    "10.3.slim_parity": {
+      "ts": 1790491871.0070107,
+      "payload": {
+        "status": "PASS",
+        "bit_diff": 0.0
+      }
+    },
+    "10.99": {
+      "ts": 1790491871.0081587,
+      "payload": {
+        "status": "PASS",
+        "n_pass": 18,
+        "n_fail": 0,
+        "mode": "single-chip"
+      }
+    },
+    "11.1.T4_anti": {
+      "ts": 1790491871.0072284,
+      "payload": {
+        "status": "PASS",
+        "dv_diff": 0.0201
+      }
+    },
+    "11.2.batch_indep": {
+      "ts": 1790491871.0072284,
+      "payload": {
+        "status": "PASS",
+        "rel_l2": 0.0
+      }
+    },
+    "11.3.grad_accum": {
+      "ts": 1790491871.0072284,
+      "payload": {
+        "status": "PASS",
+        "worst": 0.0
+      }
+    },
+    "11.99": {
+      "ts": 1790491871.0072284,
+      "payload": {
+        "status": "PASS",
+        "n_pass": 4,
+        "n_fail": 0
+      }
+    },
+    "12.1.lock": {
+      "ts": 1790491871.0074782,
+      "payload": {
+        "status": "PASS",
+        "lines": 42
+      }
+    },
+    "12.2.preflight": {
+      "ts": 1790491871.0074782,
+      "payload": {
+        "status": "PASS",
+        "modules": {
+          "jax": "PASS",
+          "jaxlib": "PASS",
+          "flax": "PASS",
+          "optax": "PASS",
+          "atomic_ops": "PASS"
+        }
+      }
+    },
+    "12.3.compile_time": {
+      "ts": 1790491871.0074782,
+      "payload": {
+        "status": "PASS",
+        "median_ms": 1249
+      }
+    },
+    "12.4.non_det": {
+      "ts": 1790491871.0074782,
+      "payload": {
+        "status": "PASS",
+        "unique_hashes": 1
+      }
+    },
+    "12.5.ckpt_roundtrip": {
+      "ts": 1790491871.0074782,
+      "payload": {
+        "status": "PASS"
+      }
+    },
+    "12.99": {
+      "ts": 1790491871.0074782,
+      "payload": {
+        "status": "PASS",
+        "n_pass": 6,
+        "n_fail": 0
+      }
+    },
+    "13.1.t7_200": {
+      "ts": 1790491871.0077152,
+      "payload": {
+        "status": "PASS",
+        "first_nonfinite_step": null,
+        "final_loss": 4.4768
+      }
+    },
+    "13.2.overfit": {
+      "ts": 1790491871.0077152,
+      "payload": {
+        "status": "INFO",
+        "loss_start": 4.658,
+        "loss_end": 4.418
+      }
+    },
+    "13.99": {
+      "ts": 1790491871.0077152,
+      "payload": {
+        "status": "PASS",
+        "n_pass": 2,
+        "n_fail": 0
+      }
+    },
+    "5.kernels": {
+      "ts": 1790491871.008847,
+      "payload": {
+        "status": "PASS",
+        "paths": [
+          "OLD",
+          "NEW",
+          "NONE",
+          "PROD"
+        ],
+        "prod_mode": "atomic_ops.fallback"
+      }
+    },
+    "7.gate.ref": {
+      "ts": 1790491871.0081587,
+      "payload": {
+        "status": "PASS"
+      }
+    },
+    "7.gate.grad.NEW": {
+      "ts": 1790491871.0081587,
+      "payload": {
+        "status": "PASS",
+        "rel": 1.223e-05
+      }
+    },
+    "7.gate.grad.PROD": {
+      "ts": 1790491871.0081587,
+      "payload": {
+        "status": "PASS",
+        "rel": 1.556e-06
+      }
+    },
+    "7.gate": {
+      "ts": 1790491871.0081587,
+      "payload": {
+        "status": "PASS",
+        "gates": {
+          "NEW": {
+            "ok": true,
+            "diff": 8.009e-08
+          },
+          "PROD": {
+            "ok": true,
+            "diff": 1.35e-08
+          },
+          "OLD": {
+            "ok": false,
+            "diff": 0.2151
+          }
+        }
+      }
+    },
+    "7.kernel.OLD": {
+      "ts": 1790491871.0081587,
+      "payload": {
+        "status": "PASS",
+        "fwdbwd_ms": 3384.639,
+        "min_ms": 3384.063,
+        "std_ms": 0.576,
+        "shape": [
+          8,
+          4096,
+          4,
+          128
+        ],
+        "n_dev_visible": 1
+      }
+    },
+    "7.kernel.PROD": {
+      "ts": 1790491871.0081587,
+      "payload": {
+        "status": "PASS",
+        "fwdbwd_ms": 81.847,
+        "min_ms": 81.758,
+        "std_ms": 0.084,
+        "shape": [
+          8,
+          4096,
+          4,
+          128
+        ],
+        "n_dev_visible": 1
+      }
+    },
+    "7.kernel.NEW": {
+      "ts": 1790491871.0081587,
+      "payload": {
+        "status": "PASS",
+        "fwdbwd_ms": 9.534,
+        "min_ms": 9.526,
+        "std_ms": 0.044,
+        "shape": [
+          8,
+          4096,
+          4,
+          128
+        ],
+        "n_dev_visible": 1
+      }
+    },
+    "7.speedup.OLD_vs_NEW": {
+      "ts": 1790491871.0081587,
+      "payload": {
+        "status": "PASS",
+        "speedup": 355.02,
+        "src_ms": 3384.639,
+        "new_ms": 9.534
+      }
+    },
+    "7.speedup.PROD_vs_NEW": {
+      "ts": 1790491871.0081587,
+      "payload": {
+        "status": "PASS",
+        "speedup": 8.59,
+        "src_ms": 81.847,
+        "new_ms": 9.534
+      }
+    },
+    "8.model": {
+      "ts": 1790491871.0081587,
+      "payload": {
+        "status": "PASS",
+        "n_params": 27490000,
+        "d_model": 512,
+        "n_heads": 4,
+        "n_layers": 8,
+        "batch": 8,
+        "seq_len": 4096
+      }
+    },
+    "9.e2e.OLD": {
+      "ts": 1790491871.0081587,
+      "payload": {
+        "status": "PASS",
+        "ms_per_step": 26764.55,
+        "tok_per_s": 1224,
+        "compile_s": 232.8,
+        "batch": 8,
+        "seq_len": 4096,
+        "n_params": 27490000
+      }
+    },
+    "9.e2e.PROD": {
+      "ts": 1790491871.0081587,
+      "payload": {
+        "status": "PASS",
+        "ms_per_step": 757.65,
+        "tok_per_s": 43250,
+        "compile_s": 99.9,
+        "batch": 8,
+        "seq_len": 4096,
+        "n_params": 27490000
+      }
+    },
+    "9.e2e.NEW": {
+      "ts": 1790491871.0081587,
+      "payload": {
+        "status": "PASS",
+        "ms_per_step": 169.6,
+        "tok_per_s": 193207,
+        "compile_s": 153.0,
+        "batch": 8,
+        "seq_len": 4096,
+        "n_params": 27490000
+      }
+    },
+    "9.e2e.speedup.OLD_vs_NEW": {
+      "ts": 1790491871.0081587,
+      "payload": {
+        "status": "PASS",
+        "speedup": 157.81
+      }
+    },
+    "9.e2e.speedup.PROD_vs_NEW": {
+      "ts": 1790491871.0081587,
+      "payload": {
+        "status": "PASS",
+        "speedup": 4.47
+      }
+    },
+    "10.amdahl.vs_OLD": {
+      "ts": 1790491871.0081587,
+      "payload": {
+        "status": "PASS",
+        "baseline": "OLD",
+        "kernel_share_base": 1.012,
+        "kernel_share_new": 0.45,
+        "kernel_speedup": 355.02,
+        "e2e_speedup_measured": 157.81,
+        "e2e_speedup_amdahl": -113.27,
+        "residual_pct": 171.8,
+        "note": "k_share>100% artifact: kernel-bench L=4096 vs E2E L=2048 \u2014 fixed in nb16b"
+      }
+    },
+    "10.amdahl.vs_PROD": {
+      "ts": 1790491871.0081587,
+      "payload": {
+        "status": "PASS",
+        "baseline": "PROD",
+        "kernel_share_base": 0.864,
+        "kernel_share_new": 0.45,
+        "kernel_speedup": 8.59,
+        "e2e_speedup_measured": 4.47,
+        "e2e_speedup_amdahl": 4.23,
+        "residual_pct": 5.3
+      }
+    },
+    "7.profile.NONE": {
+      "ts": 1790491871.008847,
+      "payload": {
+        "status": "PASS",
+        "n_layers_values": [
+          1,
+          2,
+          4,
+          8
+        ],
+        "rows": {
+          "1": {
+            "ms": 6.9
+          },
+          "2": {
+            "ms": 12.92
+          },
+          "4": {
+            "ms": 24.19
+          },
+          "8": {
+            "ms": 47.49
+          }
+        }
+      }
+    },
+    "7.profile.NEW": {
+      "ts": 1790491871.008847,
+      "payload": {
+        "status": "PASS",
+        "n_layers_values": [
+          1,
+          2,
+          4,
+          8
+        ],
+        "rows": {
+          "1": {
+            "ms": 10.92
+          },
+          "2": {
+            "ms": 19.89
+          },
+          "4": {
+            "ms": 38.53
+          },
+          "8": {
+            "ms": 74.28
+          }
+        }
+      }
+    },
+    "7.profile.PROD": {
+      "ts": 1790491871.008847,
+      "payload": {
+        "status": "PASS",
+        "n_layers_values": [
+          1,
+          2,
+          4,
+          8
+        ],
+        "rows": {
+          "1": {
+            "ms": 47.03
+          },
+          "2": {
+            "ms": 91.47
+          },
+          "4": {
+            "ms": 183.66
+          },
+          "8": {
+            "ms": 364.39
+          }
+        }
+      }
+    },
+    "7.profile.OLD": {
+      "ts": 1790491871.008847,
+      "payload": {
+        "status": "PASS",
+        "n_layers_values": [
+          1,
+          2,
+          4,
+          8
+        ],
+        "rows": {
+          "1": {
+            "ms": 1699.8
+          },
+          "2": {
+            "ms": 3364.62
+          },
+          "4": {
+            "ms": 6674.8
+          },
+          "8": {
+            "ms": 13378.41
+          }
+        }
+      }
+    },
+    "8.amdahl_layerwise.vs_OLD": {
+      "ts": 1790491871.008847,
+      "payload": {
+        "status": "PASS",
+        "baseline": "OLD",
+        "k_share_baseline": 0.995,
+        "k_share_new": 0.352,
+        "kernel_speedup_from_slope": 507.52,
+        "e2e_speedup_measured": 179.67,
+        "e2e_speedup_amdahl": 139.76,
+        "residual_pct": 22.2,
+        "method": "per-layer slope decomposition (t_step(n) fit, n in {1,2,4,8})"
+      }
+    },
+    "8.amdahl_layerwise.vs_PROD": {
+      "ts": 1790491871.008847,
+      "payload": {
+        "status": "PASS",
+        "baseline": "PROD",
+        "k_share_baseline": 0.869,
+        "k_share_new": 0.352,
+        "kernel_speedup_from_slope": 12.09,
+        "e2e_speedup_measured": 4.9,
+        "e2e_speedup_amdahl": 4.93,
+        "residual_pct": 0.7,
+        "method": "per-layer slope decomposition (t_step(n) fit, n in {1,2,4,8})"
+      }
+    },
+    "8.decomposition": {
+      "ts": 1790491871.008847,
+      "payload": {
+        "status": "PASS",
+        "fits": {
+          "NONE": {
+            "a_ms": 1.18,
+            "b_ms_per_layer": 5.78,
+            "r2": 0.99995
+          },
+          "NEW": {
+            "a_ms": 1.93,
+            "b_ms_per_layer": 9.06,
+            "r2": 0.99992
+          },
+          "PROD": {
+            "a_ms": 1.4,
+            "b_ms_per_layer": 45.4,
+            "r2": 0.99998
+          },
+          "OLD": {
+            "a_ms": 23.18,
+            "b_ms_per_layer": 1668.33,
+            "r2": 0.99999
+          }
+        },
+        "decomp": {
+          "NEW": {
+            "kernel_share": 0.352,
+            "t_kernel_total_ms": 26.2,
+            "t_step_8_full_ms": 74.4
+          },
+          "PROD": {
+            "kernel_share": 0.869,
+            "t_kernel_total_ms": 316.9,
+            "t_step_8_full_ms": 364.6
+          },
+          "OLD": {
+            "kernel_share": 0.995,
+            "t_kernel_total_ms": 13300.3,
+            "t_step_8_full_ms": 13369.8
+          }
+        },
+        "n_layers_full": 8,
+        "L": 2048,
+        "B": 8
+      }
+    },
+    "9.99": {
+      "ts": 1790491871.0067067,
+      "payload": {
+        "status": "PASS",
+        "n_pass": 13,
+        "n_fail": 0
+      }
+    },
+    "2.2b.NEW": {
+      "ts": 1790491871.0039244,
+      "payload": {
+        "status": "PASS"
+      }
+    },
+    "2.2b.OLD": {
+      "ts": 1790491871.0039244,
+      "payload": {
+        "status": "PASS",
+        "finite": true,
+        "rel_o": 0.006584,
+        "tol": 0.1524,
+        "L": 512
+      }
+    },
+    "2.2b.PROD": {
+      "ts": 1790491871.0039244,
+      "payload": {
+        "status": "PASS",
+        "finite": true,
+        "rel_o": 2.522e-06,
+        "tol": 0.05,
+        "L": 512
+      }
+    },
+    "2.3c.A17_SAFE": {
+      "ts": 1790491871.0039244,
+      "payload": {
+        "status": "PASS",
+        "ms": 5.037,
+        "shape": [
+          8,
+          4096,
+          2,
+          128
+        ],
+        "g_max": 1.25,
+        "bs2": 128
+      }
+    },
+    "2.99": {
+      "ts": 1790491871.0039244,
+      "payload": {
+        "status": "PASS",
+        "n_pass": 5,
+        "n_fail": 0
+      }
+    },
+    "3.7b.NEW": {
+      "ts": 1790491871.0043151,
+      "payload": {
+        "status": "PASS"
+      }
+    },
+    "3.7b.OLD": {
+      "ts": 1790491871.0043151,
+      "payload": {
+        "status": "PASS",
+        "rel_o": 0.1231,
+        "tol": 0.1524
+      }
+    },
+    "3.7b.PROD": {
+      "ts": 1790491871.0043151,
+      "payload": {
+        "status": "PASS",
+        "rel_o": 1.624e-06,
+        "tol": 0.05
+      }
+    },
+    "3.1.easy_new": {
+      "ts": 1790491871.0043151,
+      "payload": {
+        "status": "PASS",
+        "acc": 0.9999,
+        "steps": 10000,
+        "steps_to_0.99": 2000
+      }
+    },
+    "3.1.easy_attention": {
+      "ts": 1790491871.0043151,
+      "payload": {
+        "status": "PASS",
+        "acc": 0.9997,
+        "steps": 10000,
+        "steps_to_0.99": 1000
+      }
+    },
+    "3.1.easy_prod": {
+      "ts": 1790491871.0043151,
+      "payload": {
+        "status": "PASS",
+        "acc": 1.0,
+        "steps": 10000,
+        "steps_to_0.99": 1500
+      }
+    },
+    "3.1.easy_old": {
+      "ts": 1790491871.0043151,
+      "payload": {
+        "status": "FAIL",
+        "reason": "JaxRuntimeError: RESOURCE_EXHAUSTED: 234.76G temporaries exceed 15.75G HBM"
+      }
+    },
+    "3.block.easy.done": {
+      "ts": 1790491871.0043151,
+      "payload": {
+        "status": "PASS"
+      }
+    },
+    "3.2.hard_new": {
+      "ts": 1790491871.0043151,
+      "payload": {
+        "status": "PASS",
+        "acc": 0.9986,
+        "steps": 20000
+      }
+    },
+    "3.2.hard_attention": {
+      "ts": 1790491871.0043151,
+      "payload": {
+        "status": "PASS",
+        "acc": 0.9999,
+        "steps": 20000
+      }
+    },
+    "3.block.hard.done": {
+      "ts": 1790491871.0043151,
+      "payload": {
+        "status": "PASS"
+      }
+    },
+    "3.11.L128": {
+      "ts": 1790491871.0043151,
+      "payload": {
+        "status": "PASS",
+        "L": 128,
+        "acc": 1.0
+      }
+    },
+    "3.11.L256": {
+      "ts": 1790491871.0043151,
+      "payload": {
+        "status": "PASS",
+        "L": 256,
+        "acc": 0.9995
+      }
+    },
+    "3.11.L512": {
+      "ts": 1790491871.0043151,
+      "payload": {
+        "status": "PASS",
+        "L": 512,
+        "acc": 1.0
+      }
+    },
+    "3.11.L1024": {
+      "ts": 1790491871.0043151,
+      "payload": {
+        "status": "PASS",
+        "L": 1024,
+        "acc": 1.0
+      }
+    },
+    "3.11.L2048": {
+      "ts": 1790491871.0043151,
+      "payload": {
+        "status": "PASS",
+        "L": 2048,
+        "acc": 0.9995
+      }
+    },
+    "3.11.summary": {
+      "ts": 1790491871.0043151,
+      "payload": {
+        "status": "PASS",
+        "acc_128": 1.0,
+        "acc_max_L": 0.9995,
+        "rel_drop": 0.00045
+      }
+    },
+    "3.block.zeroshot.done": {
+      "ts": 1790491871.0043151,
+      "payload": {
+        "status": "PASS"
+      }
+    },
+    "3.12.grokking": {
+      "ts": 1790491871.0043151,
+      "payload": {
+        "status": "PASS"
+      }
+    },
+    "3.13.g_zero": {
+      "ts": 1790491871.0043151,
+      "payload": {
+        "status": "PASS",
+        "acc": 0.9999
+      }
+    },
+    "3.block.grok_g0.done": {
+      "ts": 1790491871.0043151,
+      "payload": {
+        "status": "PASS"
+      }
+    },
+    "3.99": {
+      "ts": 1790491871.0043151,
+      "payload": {
+        "status": "PASS",
+        "n_pass": 21,
+        "n_fail": 1
+      }
+    },
+    "0.sharding": {
+      "ts": 1790491871.0063922,
+      "payload": {
+        "status": "PASS",
+        "n_dev": 8
+      }
+    },
+    "4.1": {
+      "ts": 1790491871.0049953,
+      "payload": {
+        "status": "PASS",
+        "train_n": 21972,
+        "val_n": 1220,
+        "L": 4096
+      }
+    },
+    "4.branch.base": {
+      "ts": 1790491871.0049953,
+      "payload": {
+        "status": "PASS",
+        "branch": "base",
+        "first_nonfinite_step": null,
+        "final_loss": 1.5458252429962158
+      }
+    },
+    "4.branch.bs2_32": {
+      "ts": 1790491871.0049953,
+      "payload": {
+        "status": "PASS",
+        "branch": "bs2_32",
+        "first_nonfinite_step": null,
+        "final_loss": 1.545578122138977
+      }
+    },
+    "4.branch.lean": {
+      "ts": 1790491871.0049953,
+      "payload": {
+        "status": "PASS",
+        "branch": "lean",
+        "first_nonfinite_step": null,
+        "final_loss": 1.5458468198776245
+      }
+    },
+    "4.branch.highest": {
+      "ts": 1790491871.0049953,
+      "payload": {
+        "status": "PASS",
+        "branch": "highest",
+        "first_nonfinite_step": null,
+        "final_loss": 1.5459455251693726
+      }
+    },
+    "4.T22_verdict": {
+      "ts": 1790491871.0049953,
+      "payload": {
+        "status": "INFO",
+        "base_first_nf": null,
+        "others_finite": true,
+        "note": "T-22 not reproduced at decay_init=0.05; see 4.11b"
+      }
+    },
+    "4.10.scale_6M": {
+      "ts": 1790491871.0049953,
+      "payload": {
+        "status": "PASS",
+        "n_params": 5209880,
+        "final_loss": 1.4947,
+        "ppl": 4.46
+      }
+    },
+    "4.10.scale_25M": {
+      "ts": 1790491871.0049953,
+      "payload": {
+        "status": "PASS",
+        "n_params": 20649520,
+        "final_loss": 1.3254,
+        "ppl": 3.76
+      }
+    },
+    "4.10.scale_80M": {
+      "ts": 1790491871.0049953,
+      "payload": {
+        "status": "PASS",
+        "n_params": 69379692,
+        "final_loss": 1.444,
+        "ppl": 4.24
+      }
+    },
+    "4.10.scale_142M": {
+      "ts": 1790491871.0049953,
+      "payload": {
+        "status": "PASS",
+        "n_params": 123195536,
+        "final_loss": 1.4089,
+        "ppl": 4.09
+      }
+    },
+    "4.10.scaling_summary": {
+      "ts": 1790491871.0049953,
+      "payload": {
+        "status": "PASS"
+      }
+    },
+    "4.11.domain_trace": {
+      "ts": 1790491871.0049953,
+      "payload": {
+        "status": "PASS",
+        "crossed_88_at": null,
+        "verdict": "T22_NOT_REPRODUCED"
+      }
+    },
+    "4.11b.t22_high_decay": {
+      "ts": 1790491871.0049953,
+      "payload": {
+        "status": "PASS",
+        "decay_init": 1.5,
+        "max_half_span_base": 156.1,
+        "max_half_span_bs2_32": 38.6,
+        "verdict": "T22_CONFIRMED"
+      }
+    },
+    "4.11c.t22_verdict": {
+      "ts": 1790491871.0049953,
+      "payload": {
+        "status": "PASS",
+        "verdict": "SOFT_BOUND_CONFIRMED",
+        "mean_half_span_base": 149.6,
+        "over_bound_factor": 1.7
+      }
+    },
+    "4.10b.scale_6M": {
+      "ts": 1790491871.0049953,
+      "payload": {
+        "status": "PASS",
+        "n_params": 5209880,
+        "final_loss": 1.3002,
+        "ppl": 3.67,
+        "bsz": 8
+      }
+    },
+    "4.10b.scale_25M": {
+      "ts": 1790491871.0049953,
+      "payload": {
+        "status": "PASS",
+        "n_params": 20649520,
+        "final_loss": 1.0777,
+        "ppl": 2.94,
+        "bsz": 8
+      }
+    },
+    "4.10b.scale_80M": {
+      "ts": 1790491871.0049953,
+      "payload": {
+        "status": "PASS",
+        "n_params": 69379692,
+        "final_loss": 1.2943,
+        "ppl": 3.65,
+        "bsz": 8
+      }
+    },
+    "4.10b.scale_142M": {
+      "ts": 1790491871.0049953,
+      "payload": {
+        "status": "ERROR",
+        "reason": "OSError: No space left on device (superseded by nb_scale)"
+      }
+    },
+    "4.10b.scaling_monotonicity": {
+      "ts": 1790491871.0049953,
+      "payload": {
+        "status": "INFO",
+        "monotone": false,
+        "losses": [
+          [
+            "6M",
+            1.3002
+          ],
+          [
+            "25M",
+            1.0777
+          ],
+          [
+            "80M",
+            1.2943
+          ]
+        ],
+        "note": "superseded by nb_scale (bsz=8, 2000 steps)"
+      }
+    },
+    "4.99": {
+      "ts": 1790491871.0049953,
+      "payload": {
+        "status": "PASS"
+      }
+    },
+    "5.1.4096_2": {
+      "ts": 1790491871.005618,
+      "payload": {
+        "status": "PASS",
+        "shape": [
+          8,
+          4096,
+          2,
+          128
+        ],
+        "peak_gb": 0.43,
+        "n_dev": 8,
+        "sharded": true
+      }
+    },
+    "5.1.8192_2": {
+      "ts": 1790491871.005618,
+      "payload": {
+        "status": "PASS",
+        "shape": [
+          8,
+          8192,
+          2,
+          128
+        ],
+        "peak_gb": 0.86,
+        "n_dev": 8,
+        "sharded": true
+      }
+    },
+    "5.1.4096_6": {
+      "ts": 1790491871.005618,
+      "payload": {
+        "status": "PASS",
+        "shape": [
+          4,
+          4096,
+          6,
+          128
+        ],
+        "peak_gb": 0.86,
+        "n_dev": 8,
+        "sharded": true
+      }
+    },
+    "5.1.4096_8": {
+      "ts": 1790491871.005618,
+      "payload": {
+        "status": "PASS",
+        "shape": [
+          2,
+          4096,
+          8,
+          128
+        ],
+        "peak_gb": 0.86,
+        "n_dev": 8,
+        "sharded": true
+      }
+    },
+    "5.3": {
+      "ts": 1790491871.005618,
+      "payload": {
+        "status": "PASS",
+        "rel_l2": 0.0001482
+      }
+    },
+    "5.4": {
+      "ts": 1790491871.005618,
+      "payload": {
+        "status": "PASS",
+        "note": "loss_ref=sum(o^2) only, matching OLD's hf=zeros"
+      }
+    },
+    "5.5.fwd": {
+      "ts": 1790491871.005618,
+      "payload": {
+        "status": "PASS",
+        "rel_l2": 0.006243,
+        "tol": 0.1012,
+        "L": 256
+      }
+    },
+    "5.5.grad": {
+      "ts": 1790491871.005618,
+      "payload": {
+        "status": "PASS",
+        "worst": 0.01149,
+        "note": "o-only loss to match hf=zeros in OLD"
+      }
+    },
+    "5.6.fwd": {
+      "ts": 1790491871.005618,
+      "payload": {
+        "status": "PASS",
+        "rel_l2": 0.0001482
+      }
+    },
+    "5.6.grad": {
+      "ts": 1790491871.005618,
+      "payload": {
+        "status": "PASS",
+        "worst": 6.782e-07
+      }
+    },
+    "5.7": {
+      "ts": 1790491871.005618,
+      "payload": {
+        "status": "PASS",
+        "e_o": 0.0,
+        "e_h": 0.0
+      }
+    },
+    "5.8": {
+      "ts": 1790491871.005618,
+      "payload": {
+        "status": "PASS",
+        "e_o": 0.0,
+        "e_h": 0.0
+      }
+    },
+    "5.9.OLD": {
+      "ts": 1790491871.005618,
+      "payload": {
+        "status": "PASS",
+        "rel_l2": 0.03005
+      }
+    },
+    "5.9.PROD": {
+      "ts": 1790491871.005618,
+      "payload": {
+        "status": "PASS",
+        "rel_l2": 0.02943
+      }
+    },
+    "5.10": {
+      "ts": 1790491871.005618,
+      "payload": {
+        "status": "PASS",
+        "old_valid": true,
+        "prod_valid": true,
+        "note": "if PASS \u2014 speedup numbers in NB2 compare same math, not different"
+      }
+    },
+    "5.99": {
+      "ts": 1790491871.005618,
+      "payload": {
+        "status": "PASS",
+        "n_pass": 17,
+        "n_fail": 0
+      }
+    },
+    "7.2.cross_session": {
+      "ts": 1790491871.0061038,
+      "payload": {
+        "status": "PASS",
+        "prev_hash": "f177a865523bb68d1c906a667517b8d2",
+        "current_hash": "f177a865523bb68d1c906a667517b8d2",
+        "prev_pid": 441,
+        "current_pid": 1936
+      }
+    },
+    "7.99": {
+      "ts": 1790491871.0061038,
+      "payload": {
+        "status": "PASS",
+        "n_pass": 3,
+        "n_fail": 0
+      }
+    },
+    "8.2.kernel_a_sharded": {
+      "ts": 1790491871.0063922,
+      "payload": {
+        "status": "PASS",
+        "Aqk": 2.471e-06,
+        "Akk": 2.45e-06,
+        "B": 16,
+        "N_DEV": 8
+      }
+    },
+    "8.3.timing": {
+      "ts": 1790491871.0063922,
+      "payload": {
+        "status": "PASS",
+        "sharded_ms": 5.258,
+        "B": 8,
+        "N_DEV": 8
+      }
+    },
+    "8.99": {
+      "ts": 1790491871.0063922,
+      "payload": {
+        "status": "PASS",
+        "n_pass": 4,
+        "n_fail": 0
+      }
+    },
+    "9.1.sbs_16": {
+      "ts": 1790491871.0067067,
+      "payload": {
+        "status": "PASS",
+        "ms": 1.29
+      }
+    },
+    "9.1.sbs_32": {
+      "ts": 1790491871.0067067,
+      "payload": {
+        "status": "PASS",
+        "ms": 1.047
+      }
+    },
+    "9.1.sbs_64": {
+      "ts": 1790491871.0067067,
+      "payload": {
+        "status": "PASS",
+        "ms": 1.014
+      }
+    },
+    "9.1.sbs_128": {
+      "ts": 1790491871.0067067,
+      "payload": {
+        "status": "PASS",
+        "ms": 1.032
+      }
+    },
+    "9.2.group_4": {
+      "ts": 1790491871.0067067,
+      "payload": {
+        "status": "PASS",
+        "ms": 0.966
+      }
+    },
+    "9.2.group_8": {
+      "ts": 1790491871.0067067,
+      "payload": {
+        "status": "PASS",
+        "ms": 0.979
+      }
+    },
+    "9.2.group_16": {
+      "ts": 1790491871.0067067,
+      "payload": {
+        "status": "PASS",
+        "ms": 0.928
+      }
+    },
+    "9.2.group_32": {
+      "ts": 1790491871.0067067,
+      "payload": {
+        "status": "PASS",
+        "ms": 1.019
+      }
+    },
+    "9.3.b3_bf16x3": {
+      "ts": 1790491871.0067067,
+      "payload": {
+        "status": "PASS",
+        "grad_max": 1.0
+      }
+    },
+    "9.3.b3_highest": {
+      "ts": 1790491871.0067067,
+      "payload": {
+        "status": "PASS",
+        "grad_max": 1.0
+      }
+    },
+    "9.4.btl": {
+      "ts": 1790491871.0067067,
+      "payload": {
+        "status": "PASS",
+        "ms": 0.948
+      }
+    },
+    "9.4.lean": {
+      "ts": 1790491871.0067067,
+      "payload": {
+        "status": "PASS",
+        "ms": 1.38
+      }
+    },
+    "HBM.NEW.slope": {
+      "ts": 1790491871.0095723,
+      "payload": {
+        "status": "PASS",
+        "slope_gb_per_layer": 0.001,
+        "intercept_gb": 0.2
+      }
+    },
+    "HBM.OLD.slope": {
+      "ts": 1790491871.0095723,
+      "payload": {
+        "status": "PASS",
+        "slope_gb_per_layer": 0.001,
+        "intercept_gb": 1.34
+      }
+    },
+    "HBM.residual_explained": {
+      "ts": 1790491871.0095723,
+      "payload": {
+        "status": "PASS",
+        "delta_intercept_gb": 1.14,
+        "verdict": "memory_bleed_disproven_fixed_overhead_confirmed",
+        "note": "OLD fixed +1.14 GB HBM overhead from materialized prefix-product buffers; does not compound with depth"
+      }
+    },
+    "SCALE.80M_dp": {
+      "ts": 1790491871.009303,
+      "payload": {
+        "status": "PASS",
+        "n_params": 69379692,
+        "final_loss": 1.0082,
+        "ppl": 2.74,
+        "bsz": 8,
+        "steps": 2000,
+        "first_nf": null
+      }
+    },
+    "SCALE.142M_dp": {
+      "ts": 1790491871.009303,
+      "payload": {
+        "status": "PASS",
+        "n_params": 123195536,
+        "final_loss": 0.9513,
+        "ppl": 2.59,
+        "bsz": 8,
+        "steps": 2000,
+        "first_nf": null
+      }
+    },
+    "SCALE.monotonicity": {
+      "ts": 1790491871.009303,
+      "payload": {
+        "status": "PASS",
+        "monotone": true,
+        "losses": [
+          [
+            "6M",
+            3.67
+          ],
+          [
+            "25M",
+            2.94
+          ],
+          [
+            "80M",
+            2.74
+          ],
+          [
+            "142M",
+            2.59
+          ]
+        ],
+        "note": "6M/25M from nb4 4.10b; 80M/142M at bsz=8 (2000 steps)"
+      }
+    },
+    "SCALE.hybrid_dp_parity": {
+      "ts": 1790491871.009303,
+      "payload": {
+        "status": "PASS",
+        "hybrid": 1.998,
+        "dp": 1.998
+      }
+    }
+  },
+  "summary": {
+    "PASS": 145,
+    "FAIL": 1,
+    "SUSPECT": 0,
+    "SKIP": 0,
+    "commit_hashes": {
+      "nb1": "c6862ced7da70782",
+      "nb10": "c6862ced7da70782",
+      "nb11": "c6862ced7da70782",
+      "nb12": "c6862ced7da70782",
+      "nb13": "c6862ced7da70782",
+      "nb16": "c6862ced7da70782",
+      "nb16b": "c6862ced7da70782",
+      "nb2": "c6862ced7da70782",
+      "nb3": "c6862ced7da70782",
+      "nb4": "c6862ced7da70782",
+      "nb5": "c6862ced7da70782",
+      "nb7": "c6862ced7da70782",
+      "nb8": "c6862ced7da70782",
+      "nb9": "c6862ced7da70782",
+      "nb_hbm": "c6862ced7da70782",
+      "nb_scale": "c6862ced7da70782"
+    }
+  }
+}

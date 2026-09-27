@@ -1,0 +1,62 @@
+{
+  "method": "direct kernel fwd+bwd measurement",
+  "hardware": "single TPU v5e-1",
+  "B": 4,
+  "D": 128,
+  "bs2": 64,
+  "configs": [
+    {
+      "H": 2,
+      "L": 2048,
+      "OLD_ms": 288.796,
+      "NEW_ms": 1.498,
+      "PROD_ms": 10.393,
+      "sp": 192.83
+    },
+    {
+      "H": 2,
+      "L": 4096,
+      "OLD_ms": 575.32,
+      "NEW_ms": 2.781,
+      "PROD_ms": 20.603,
+      "sp": 206.9
+    },
+    {
+      "H": 4,
+      "L": 2048,
+      "OLD_ms": 744.459,
+      "NEW_ms": 2.485,
+      "PROD_ms": 20.204,
+      "sp": 299.59
+    },
+    {
+      "H": 4,
+      "L": 4096,
+      "OLD_ms": 1501.515,
+      "NEW_ms": 4.668,
+      "PROD_ms": 40.474,
+      "sp": 321.69
+    },
+    {
+      "H": 6,
+      "L": 2048,
+      "OLD_ms": 1198.748,
+      "NEW_ms": 2.563,
+      "PROD_ms": 29.444,
+      "sp": 467.64
+    },
+    {
+      "H": 6,
+      "L": 4096,
+      "OLD_ms": 2398.292,
+      "NEW_ms": 5.352,
+      "PROD_ms": 58.992,
+      "sp": 448.1
+    }
+  ],
+  "correctness_rel_l2_NEW_vs_JAX_REF": {
+    "H4_L2048": 2.486e-06,
+    "H6_L2048": 2.481e-06
+  },
+  "note": "H=6 is the single-chip peak. Beyond this the fused kernel's tile pack (bs2=64) no longer fits cleanly and sharding across chips (TPU v5e-8) is required for meaningful scaling. Sharded H>6 study is future work."
+}

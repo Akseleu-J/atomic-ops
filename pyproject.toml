@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "atomic_ops"
-version = "0.1.0"
+version = "0.2.0"
 description = "Fused Gated DeltaNet-2 kernels for TPU v5e (JAX/Pallas)"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "jax>=0.4.20,<0.13",   # покрывает 0.11.1
+    "jax>=0.4.20,<0.13",   # covers 0.11.1
     "jaxlib>=0.4.20,<0.13",
     "numpy>=1.24",
 ]
@@ -44,11 +44,16 @@ examples = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["atomic_ops*"]
-exclude = ["tests*", "docs*", "benchmarks*", "examples*"]
+include = ["atomic_ops*", "atomic_gdn2*"]
+exclude = [
+    "tests*", "tests_gdn2*",
+    "docs*", "benchmarks*", "examples*",
+    "beta*", "notebooks*",
+]
 
 [tool.setuptools.package-data]
-atomic_ops = ["py.typed"]
+atomic_ops  = ["py.typed"]
+atomic_gdn2 = ["py.typed"]
 
 # ── Ruff configuration ──────────────────────────────────────────────────────
 [tool.ruff]
@@ -88,3 +93,9 @@ convention = "google"
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: tiny training smoke (deselect with -m 'not slow')",
+]
+testpaths = ["tests_gdn2"]

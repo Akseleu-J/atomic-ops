@@ -14,6 +14,13 @@ pre-commit install
 
 ## Running tests
 
+CI runs on CPU with `interpret=True`. Does NOT reproduce TPU-specific
+results (sharding parity, Mosaic lowering, timing).
+
+The reference numbers (507x speedup, 145/146 gates, MQAR 0.9995) come from
+an external attestation suite of ~165 cells across 18 notebooks, run on
+real TPU v5e-1 / v5e-8. See `docs/ATTESTATION.md`.
+
 ### CPU smoke tests (no TPU required)
 
 ```bash
