@@ -1,9 +1,22 @@
 {
-  "method": "direct kernel fwd+bwd measurement",
-  "hardware": "single TPU v5e-1",
+  "notebook": "notebooks/speedup_scaling.ipynb",
+  "repo": "https://github.com/Akseleu-J/atomic-ops",
+  "repo_commit": "b8a7687",
+  "attestation_commit": "c6862ced7da70782",
+  "date": "2026-09-27",
+  "jax": "0.11.2",
+  "libtpu": "0.0.48",
+  "python": "3.12.13",
+  "backend": "tpu",
+  "devices": 1,
+  "hardware": "TPU v5e-1",
+  "baseline": "jax.lax.associative_scan",
+  "candidate": "atomic_gdn2 (Pallas, make_blr_trainable)",
+  "metric": "kernel fwd+bwd, gradient of sum(o^2 + hf^2)",
   "B": 4,
   "D": 128,
   "bs2": 64,
+  "seed": 0,
   "configs": [
     {
       "H": 2,
@@ -11,15 +24,17 @@
       "OLD_ms": 288.796,
       "NEW_ms": 1.498,
       "PROD_ms": 10.393,
-      "sp": 192.83
+      "speedup_NEW_vs_OLD": 192.83,
+      "speedup_PROD_vs_OLD": 27.79
     },
     {
       "H": 2,
       "L": 4096,
-      "OLD_ms": 575.32,
+      "OLD_ms": 575.320,
       "NEW_ms": 2.781,
       "PROD_ms": 20.603,
-      "sp": 206.9
+      "speedup_NEW_vs_OLD": 206.90,
+      "speedup_PROD_vs_OLD": 27.92
     },
     {
       "H": 4,
@@ -27,7 +42,8 @@
       "OLD_ms": 744.459,
       "NEW_ms": 2.485,
       "PROD_ms": 20.204,
-      "sp": 299.59
+      "speedup_NEW_vs_OLD": 299.59,
+      "speedup_PROD_vs_OLD": 36.85
     },
     {
       "H": 4,
@@ -35,7 +51,8 @@
       "OLD_ms": 1501.515,
       "NEW_ms": 4.668,
       "PROD_ms": 40.474,
-      "sp": 321.69
+      "speedup_NEW_vs_OLD": 321.69,
+      "speedup_PROD_vs_OLD": 37.10
     },
     {
       "H": 6,
@@ -43,7 +60,8 @@
       "OLD_ms": 1198.748,
       "NEW_ms": 2.563,
       "PROD_ms": 29.444,
-      "sp": 467.64
+      "speedup_NEW_vs_OLD": 467.64,
+      "speedup_PROD_vs_OLD": 40.71
     },
     {
       "H": 6,
@@ -51,12 +69,24 @@
       "OLD_ms": 2398.292,
       "NEW_ms": 5.352,
       "PROD_ms": 58.992,
-      "sp": 448.1
+      "speedup_NEW_vs_OLD": 448.10,
+      "speedup_PROD_vs_OLD": 40.65
     }
   ],
   "correctness_rel_l2_NEW_vs_JAX_REF": {
     "H4_L2048": 2.486e-06,
     "H6_L2048": 2.481e-06
   },
-  "note": "H=6 is the single-chip peak. Beyond this the fused kernel's tile pack (bs2=64) no longer fits cleanly and sharding across chips (TPU v5e-8) is required for meaningful scaling. Sharded H>6 study is future work."
+  "summary": {
+    "peak_speedup": 467.64,
+    "peak_config": {"H": 6, "L": 2048},
+    "pattern": "speedup grows with H, peaks at H=6 on single chip; beyond H=6 requires sharding (TPU v5e-8)",
+    "expected_from_readme": [193.0, 207.0, 300.0, 322.0, 468.0, 448.0]
+  },
+  "notes": [
+    "Direct kernel measurement — no slope decomposition, no NONE baseline.",
+    "PROD is atomic_ops.fallback (previous-generation Pallas), included for reference.",
+    "H=8 is held back pending a sharded study on TPU v5e-8.",
+    "All numbers reproducible via notebooks/speedup_scaling.ipynb."
+  ]
 }
