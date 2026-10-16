@@ -1,3 +1,10 @@
+> Publication note (2026-10-16): kernel code used for the four new language-model runs is
+> commit `0dbc59cf74883315d7adbebe9229c520663e0d58`. Headline timings below are historical
+> attestation, not a newly reproduced benchmark of this documentation revision. The previous
+> scaling notebook had wrapper-equivalence and call-arity issues. A corrected, parity-gated
+> reproducer is supplied; its performance has not yet been measured. See
+> [publication evidence](docs/PUBLICATION_EVIDENCE.md) and [reproduction protocol](docs/REPRODUCTION_PROTOCOL.md).
+
 # atomic-ops
 
 **TPU-native GDN-2 kernels, written in JAX/Pallas for TPU v5e.**
@@ -91,17 +98,19 @@ v5e-1, B=4, D=128, `bs2=64`:
 
 Correctness: `rel_l2(NEW, JAX_REF) = 2.5e-06` at H ∈ {4,6}, L=2048.
 
-**End-to-end training step** — 27.5M-parameter LM (B=8, L=2048, H=6, D=128):
+**Previously reported end-to-end training step (primary raw artifact not located in the committed aggregate)** — 27.5M-parameter LM (B=8, L=2048, H=6, D=128):
 
 - `atomic_gdn2` v0.2.0: **103.29 ms/step** (158,626 tok/s)
 - `associative_scan`: **20,674.62 ms/step** (792 tok/s)
-- **200.17× end-to-end speedup.**
+- **200.17× claimed in prior documentation; do not treat as independently reproduced here.**
+
+The committed `final_report.json` instead records a different 27.49M, L=4096 run: NEW 169.6 ms, OLD 26764.55 ms (157.81×), PROD 757.65 ms (4.47× vs NEW). These are distinct historical records and are not a speedup of the current 307M hybrid.
 
 The fused backward also outperforms both the v0.1.0 Pallas backward and the
 pure-JAX WY reference; the fused forward is faster than the pure-JAX WY
 reference on the same shape.
 
-**Other v0.2.0 results:** 145/146 correctness gates PASS; MQAR 0.9999 easy /
+**Other v0.2.0 results:** 145 PASS / 1 FAIL across the historical aggregate (the failure is an OLD-baseline MQAR OOM; these are not all correctness-only gates); MQAR 0.9999 easy /
 0.9986 hard / 0.9995 zero-shot @ 2048; scaling 6M → 142M monotone on
 enwik8; T-22 numerical boundary documented (`half_span < 88`).
 
@@ -138,8 +147,7 @@ peak 38.8× on the smaller `KAGGLE_SMALL` preset (B=4, L=2048).
 **`atomic_gdn2` v0.2.0 (original implementation):**
 
 - **Unified mega-backward** — B2+B1+B3+B4+B5 fused into one Pallas launch.
-- **One-call training API** — `make_blr_trainable` via `jax.custom_vjp`; no
-  recomputation of forward activations in the backward pass.
+- **One-call training API** — `make_blr_trainable` via `jax.custom_vjp`; saved chunk residuals and selective recomputation of local factors in backward.
 - **Automatic fallback** — on CPU/GPU or when `d_head != 128`, dispatches to
   a checkpointed pure-JAX chunked-WY reference with identical damping
   semantics.

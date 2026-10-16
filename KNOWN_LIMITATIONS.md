@@ -1,3 +1,9 @@
+> Scope note (2026-10-16): this file mixes historical v0.1 restrictions and v0.2 claims.
+> Current `atomic_gdn2` uses the BTL MXU factorization when diag=btl; the VPU-only
+> statement in section 1 describes the legacy/lean path, not all v0.2 scoring.
+> See docs/PUBLICATION_EVIDENCE.md for stage-specific precision, saved residuals,
+> selective recomputation and benchmark provenance caveats.
+
 # Known Limitations
 
 This document lists deliberate restrictions and known gaps of the current
