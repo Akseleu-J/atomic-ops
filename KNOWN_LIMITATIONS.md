@@ -23,9 +23,27 @@ Evidence status: 17 October 2026. This documentation/evidence update leaves both
 
 ## Numerical agreement and optimizer sensitivity
 
+### Parameter-update gate failures: seeds 0 and 1
+
 The saved gradient snapshots pass the recorded relative-L2 threshold of 0.005 per tensor. Full-step parameters, optimizer states and loss also pass their recorded gates. **NEW/OLD parameter-update differences fail for seeds 0 and 1; NEW/JAX_REF update differences pass all three.** A passing parameter norm can hide a difference in a small update. The original comparison failures remain in the raw archives.
 
+An update comparison first subtracts the initial parameters, so a small difference
+that was negligible in a full parameter norm can be large relative to the update.
+For AdamW with initially zero moments, the first bias-corrected adaptive term is
+`g_c / (abs(g_c) + epsilon)`, where `g_c` is the gradient after global clipping.
+With `epsilon=1e-8`, opposite gradients near that scale can yield visibly different
+updates despite tiny absolute gradient differences. Weight decay adds its own term;
+epsilon does not generate an adaptive update from an exactly zero gradient.
+
 For the selected seed-0 coordinate `block_6/q_conv_w[236,2]`, OLD and NEW have opposite signs near 1e-8. Severe cancellation is present in the captured convolution factors. Exact summation retains **98.2542%** of their probed gradient difference, locating most of that difference before the final contraction. This does not establish the unique upstream operation responsible for it.
+
+This supports a concrete cancellation/optimizer-sensitivity case, not an exhaustive
+explanation of every seed-0/1 update failure. In particular, the separate seed-1
+`decay_a[4]` discrepancy has not been localized by this capture. All current speed
+measurements use zero damping, so damping alone cannot explain these failures.
+The exact captured sums do not prove that every upstream difference is rounding
+rather than an implementation issue. See the [numerical evidence](numerical/README.md)
+for reports, controls and original archives.
 
 - The exact oracle sums already-rounded captured FP32 factors; it is not the mathematically exact gradient of the full network.
 - The fresh exact TPU run operates on frozen captures, plus an isolated convolution check. It does not rerun full-model Pallas backward or measure speed.

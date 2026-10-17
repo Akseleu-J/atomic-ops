@@ -9,6 +9,18 @@
 - Preserve historical and incomplete runs with roles and hashes; update README and known limitations.
 - Kernel source, public APIs and package version unchanged. No new release is created.
 
+**Why the headline numbers changed.** Earlier reports gave approximately 468× kernel
+and 200.17× end-to-end speedups. The current three-seed, zero-damping protocol with
+full-return-tree synchronization measures **411.75 ± 5.13×** and **117.76 ± 0.15×**,
+respectively, against the author's OLD implementation. These are new measurements
+under a corrected, explicitly documented protocol, not a rescaling of the old samples.
+Comparator wrappers, numerical settings and the executable E2E setup also differ;
+OLD uses block rematerialization in the current synthetic 34,873,952-parameter step.
+The evidence does not isolate how much each protocol change contributes to the ratio
+difference, and the incomplete original timing provenance does not establish that
+the earlier figures were single-run measurements. Historical records remain unchanged.
+See [current methods](benchmarks/README.md) and [scope](KNOWN_LIMITATIONS.md).
+
 
 ## [0.2.0] — 2026-09-27
 
