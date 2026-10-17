@@ -1,0 +1,511 @@
+{
+  "date": "2026-10-17",
+  "kernel_revision": "11616acd8a061768a38feb12c58e5e329952f5d5",
+  "files": [
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/adam-epsilon.csv",
+      "sha256": "10765d95fa91ba15759ccefc0d2ec1fad654f77247544ba820ac35546cdd75b1",
+      "bytes": 8570
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/analysis.log",
+      "sha256": "d372cbf9375a6a605a33c3e4bb129f617808bcff7302ae05492e760bf93f551b",
+      "bytes": 38
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/coordinate-analysis.json",
+      "sha256": "b23435bae62ac3a72f6fdcc813d26d80a10a8aefd60be73e8485017714a6779a",
+      "bytes": 30843
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/coordinate-summary.csv",
+      "sha256": "76e4009ebfc1a61ab5c975ed9c069ddfb64cded2f30bd147a49e90dc6bee3d9a",
+      "bytes": 4512
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/coordinate-table.tex",
+      "sha256": "8e2afd95154a094f8532f7a07817e6038ba95f77b8611f0ce1eb7280f65f7180",
+      "bytes": 611
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/cross-contractions.csv",
+      "sha256": "b58dcc4f80a8ea9b7c8d865a9b7bc01aee715b6421125db5413e36b8fc20735d",
+      "bytes": 2513
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/difference-decomposition.csv",
+      "sha256": "5c261bd44f1f793178ad07c8521a62c9fc0eca4b3d6bbedc2cfd4791f133895a",
+      "bytes": 3729
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/independent-verification.json",
+      "sha256": "4d3560839d42e65cf026a02b8a9177f74b5d82163c8d26df508afb50fd8c8840",
+      "bytes": 1130
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/instrumentation-control.csv",
+      "sha256": "ed90dbafae3662d35cfe60da0b79e9376aeded0916e17023309e1c280dd21aeb",
+      "bytes": 2099
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/JAX_REF-control.json",
+      "sha256": "4f00c585fd37af854bd1448f72afee47b246c3c20d2b09443187d555b7555c31",
+      "bytes": 3780
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/JAX_REF-control.log",
+      "sha256": "b9a92c65633c599d32995d8b8860772fe877fa8472299dc88056cabc1c7f211a",
+      "bytes": 675
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/JAX_REF-probe.json",
+      "sha256": "0fb6787520eaf6bd5f57c516f8ec83ca4fc2d23ad09646e58ba6ccf09f423f9b",
+      "bytes": 4401
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/JAX_REF-probe.log",
+      "sha256": "9042dc67298deec68aa2ff0ff0ffb528b3b9ce11978377202e93713cd42ca423",
+      "bytes": 661
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/JAX_REF-seed0-coordinate.npz",
+      "sha256": "893d3cd357beec99d552536014df89cd03ae2195428dc91e7215c1dee9f6d373",
+      "bytes": 194541
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/JAX_REF-seed1-coordinate.npz",
+      "sha256": "79eda97c138b8808d92766b5fcedc05fe6f19c2a33f4c58df18892c76b2f9caa",
+      "bytes": 194662
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/JAX_REF-seed2-coordinate.npz",
+      "sha256": "ed8cd3cce866f83f1acf3dbd139b487fe2378bf9a1d822f43430fd0555d28180",
+      "bytes": 194659
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/local-precision.csv",
+      "sha256": "b15099d646d6711232487c425d75397d1607f3c58db54e1aa97acbc8d60e39fe",
+      "bytes": 5064
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/METHODS-AND-LIMITATIONS.md",
+      "sha256": "565c9538ef185984ee32e6cbb6895be1654d653cfa5ebbf414ca7f22c5b60c40",
+      "bytes": 2147
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/NEW-control.json",
+      "sha256": "e79ee8a666b9796d2d9d099fa2b13ad719f95367ea3e52c9733243dd543d4c55",
+      "bytes": 3778
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/NEW-control.log",
+      "sha256": "9d916dc575579649d355991064dd44892d6f4f4a30023b2462664647097f9616",
+      "bytes": 647
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/NEW-probe.json",
+      "sha256": "fe88bb3fced9806e386f3c20bb3846ead5e2478e10db31c917faea30ce35efe9",
+      "bytes": 4376
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/NEW-probe.log",
+      "sha256": "0408cffd2feafe0d471ee9a05cb83183b33e0f590f3ea4b46c9f9cc78b810a40",
+      "bytes": 633
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/NEW-seed0-coordinate.npz",
+      "sha256": "dedecc43793fcafdf96356a4bf5141dac14d615336687c844033a2233775d75a",
+      "bytes": 194482
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/NEW-seed1-coordinate.npz",
+      "sha256": "a92ab6930b2089433cb75bfc34dff94deaf406d6fbf088de49193226b14de4a8",
+      "bytes": 194648
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/NEW-seed2-coordinate.npz",
+      "sha256": "367061dd722af1e9502cd6b3bbd9f79ff690d88cce9f6dbe42491357d82d6f23",
+      "bytes": 194703
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/OLD-control.json",
+      "sha256": "533253c1dcae47f0173bea254912a7a477d89cbc8967ab78933dbe84f8063fd0",
+      "bytes": 3782
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/OLD-control.log",
+      "sha256": "0d50047d846f5328ab704b20f7a635e0cd21d55c5f3f418000b0b8287fbb4fdf",
+      "bytes": 649
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/OLD-probe.json",
+      "sha256": "4d48676680e9b3a8414ab46d4e71a21a43c5b84a8728007a6729ff8aeedaba2c",
+      "bytes": 4385
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/OLD-probe.log",
+      "sha256": "67e2cb302a6f197e2c24d185685833bf75b9fd53d3acfc36afea929bf422b64d",
+      "bytes": 635
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/OLD-seed0-coordinate.npz",
+      "sha256": "2ef364bdebdca68cb60f04f5b2d680a58647d69a6be1f23bcf550d7222c44aa6",
+      "bytes": 194531
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/OLD-seed1-coordinate.npz",
+      "sha256": "772697823d4b5aa4e8cce181159e351a4fc4d900675ab7484cd93f935e4e9ca2",
+      "bytes": 194639
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/OLD-seed2-coordinate.npz",
+      "sha256": "3d506ab58f171d0c10b91ba674b6e3fdbe7497e48a3201db19c28d59dc4e4433",
+      "bytes": 194663
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/pip-freeze.txt",
+      "sha256": "b37d2fad1eb8b18711c62900ecb0d0622895075c6c4b946e23803d96592a4764",
+      "bytes": 585
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/source-derivation.json",
+      "sha256": "faba51a536b14d12b25e17a0f0daa1c271387a4cb77694eef4212a4f0e044cb4",
+      "bytes": 4350
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/actual-coordinate/status.json",
+      "sha256": "378129128a02dfb84295f11f9715c396ed09cda83b0a8e7772fedeeb6370b347",
+      "bytes": 617
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/controlled-rounding/inputs-seed0.npz",
+      "sha256": "faf9ebdde7906718fcf25a0dbbd4bf8bcceec2eb0ee46c404c6d3eb5b61349b5",
+      "bytes": 31907
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/controlled-rounding/inputs-seed1.npz",
+      "sha256": "9caa264b2cd063c655a1ca4e606bd044bd570a37a3cdd5b07ac4baf4aea5dc49",
+      "bytes": 31940
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/controlled-rounding/inputs-seed2.npz",
+      "sha256": "7b5cf2690d375affd98cf0481f402f1de07ab4cc90b199f08e62d5610a440c8c",
+      "bytes": 31933
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/controlled-rounding/local-export-recovery.json",
+      "sha256": "b7b403a63d8fdb9edd737ba82c4692d58f691c48b4f9933be43b6cda35115972",
+      "bytes": 371
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/controlled-rounding/pip-freeze.txt",
+      "sha256": "3489d06a6d24dadd0c8eba6a0986e38c6657b3661d2126019384a2a10082a358",
+      "bytes": 293
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/controlled-rounding/publication/all-cases-table.tex",
+      "sha256": "f401ed3c9b7b2f75a472713c56d915363a9afce85381428446ab3c957c3ce418",
+      "bytes": 2130
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/controlled-rounding/publication/all-gradients-and-updates.csv",
+      "sha256": "72fc6e0932ee5eb16024b1fc682d451ab98214339b5cb2d19f2e54359ec87ef8",
+      "bytes": 10862
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/controlled-rounding/publication/artifact-hashes.json",
+      "sha256": "0e66f5bba78aafa927c149b7bf5d6fa6d2aa2cbd33c9e681bf55710c4a6e9768",
+      "bytes": 1289
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/controlled-rounding/publication/epsilon-sensitivity.csv",
+      "sha256": "3e5f4af4e7f1f828f22e8930d62c9fed738667a79fe68d615dbae1eba49a9e6d",
+      "bytes": 6030
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/controlled-rounding/publication/evidence-summary.json",
+      "sha256": "fd9cc69530b07e52cd2a586efa512c96e04ce56900669a0e775998e7a4355d74",
+      "bytes": 561
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/controlled-rounding/publication/execution-attestation.json",
+      "sha256": "b8856f90c48a255fd5b1387b1b92481079acf1134c4d544ea666bd451a183b7b",
+      "bytes": 1318
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/controlled-rounding/publication/figure-caption.txt",
+      "sha256": "74376e1f312f2000fc21967f8de0e13a025ade25117387352b8d544b75d2ffef",
+      "bytes": 980
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/controlled-rounding/publication/METHODS-AND-LIMITATIONS.md",
+      "sha256": "c4fb2aaf8127b0b7531e8c65ba67e56a67bc93f9523afd4c8e4a79d7b41e0fb4",
+      "bytes": 2932
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/controlled-rounding/publication/observed-coordinate-adam-replay.csv",
+      "sha256": "aa8e4b9eb20532b9a8bdaaffc325add16ccc6d3f32636a4d499869b1372cc4d3",
+      "bytes": 156
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/controlled-rounding/publication/oracle-checks.csv",
+      "sha256": "3f0b5714c6e7941f053efa1119790085aff62648ecf9503959bc39a0f7bf2497",
+      "bytes": 1344
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/controlled-rounding/publication/precision-convergence.csv",
+      "sha256": "48c441fb6118fa8de1bbcc6bf5b78a3aba3a06a293c2984a4f54c0e2a44b22a3",
+      "bytes": 1689
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/controlled-rounding/publication/rounding-adam-stress.pdf",
+      "sha256": "9decb3abd0b36f7a8168252f0e2933095fcb5464e2889b0b8562629744283611",
+      "bytes": 19267
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/controlled-rounding/publication/rounding-adam-stress.png",
+      "sha256": "e0cba32987b8f1721d02f5408bd859de2b2bc21231226ce89a968a488566fbd8",
+      "bytes": 156412
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/controlled-rounding/publication/rounding-adam-stress.svg",
+      "sha256": "97818a89118e441c4c3cafce3ea5dc3d4c8f6dd8e118addfe5606499aea8843f",
+      "bytes": 108980
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/controlled-rounding/publication-generation-status.json",
+      "sha256": "2618b95f1f6be6bfde8537756f85b83845d039001563135b9d59d817446733eb",
+      "bytes": 16
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/controlled-rounding/report.json",
+      "sha256": "74704779c10f1b3c214d09874b78633816f7cc7c321c8c11c984afac30698f34",
+      "bytes": 30313
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/controlled-rounding/source-derivation.json",
+      "sha256": "f80d7638abb894dfbd58e95cff6e191bc2eda954865d9624d491e36c9d302428",
+      "bytes": 1191
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/controlled-rounding/status.json",
+      "sha256": "36fa58bec503338ac72af022eb07ace98160a245065bc73ba7a2f7988d2eff3c",
+      "bytes": 325
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/controlled-rounding/worker.log",
+      "sha256": "2bb28d84e20d598afe9c216856f753782e6ea8e5d09bd6d26d049df95adbc97e",
+      "bytes": 1887
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/exact-TPU-confirmation/confirmation.json",
+      "sha256": "336a715d3072794741167472091efc1c42fa8eb07bfb2a0a7510ccdff177885e",
+      "bytes": 17825
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/exact-TPU-confirmation/decomposition.csv",
+      "sha256": "7c6dec788e1a93c2fe77cf737eae5179dff1213510edecbce9eabbb7b4ffbc54",
+      "bytes": 2905
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/exact-TPU-confirmation/exact-cross-contractions.csv",
+      "sha256": "bde1fd6324f784a5bd32bf33cc3a2042663ca68709ba68e15a1552d48d12d044",
+      "bytes": 2660
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/exact-TPU-confirmation/exact-device-bins.npz",
+      "sha256": "57e9d0569309cee502369f087143bf6b0e679e3992f59c72dedcaa5504b5fb41",
+      "bytes": 6535
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/exact-TPU-confirmation/execution-status.json",
+      "sha256": "56215e66475ac8e1378d52d5e3345f88ee026e1b45c93025bcbc0e00a0eaab88",
+      "bytes": 45
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/exact-TPU-confirmation/local-float-replays.csv",
+      "sha256": "e7e7c15916e79cf75bcb400718fed62f62cb6d167e5af39dbc2b2138810832c0",
+      "bytes": 2349
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/exact-TPU-confirmation/pip-freeze.txt",
+      "sha256": "441b5b25c356395f18a2db441bf693f9e8f7d3aee1a3fc3fa7c2df6e5392e943",
+      "bytes": 194
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/exact-TPU-confirmation/verification.json",
+      "sha256": "b2fa719f48959d5c6dc0e8da85fe8412ff6c73501b9bf589007d8ac8cb69b232",
+      "bytes": 979
+    },
+    {
+      "file": "numerical/experiments/2026-10-17/exact-TPU-confirmation/worker.log",
+      "sha256": "a87e7156bd3cb06b9052413ae380ded6b1c85ff0c95ff1ee227f4c73f651206a",
+      "bytes": 1889
+    },
+    {
+      "file": "numerical/notebooks/actual-coordinate-audit.ipynb",
+      "sha256": "3d936caf8c87ab42da0a2cffb510cb32439a91c35902e420c023eaf5bc3e89f8",
+      "bytes": 64833
+    },
+    {
+      "file": "numerical/notebooks/exact-tpu-confirmation.ipynb",
+      "sha256": "c2a16ef3800c2eb9f1dea4dff4a28199224a541edeb800fcbd6766ad4e6066f5",
+      "bytes": 2481327
+    },
+    {
+      "file": "numerical/notebooks/rounding-hypothesis.ipynb",
+      "sha256": "38c461b8d1b174097f6c3a03863a8e385c12ca98244e84165b268d7029247145",
+      "bytes": 48944
+    },
+    {
+      "file": "numerical/README.md",
+      "sha256": "d70c002f68823ce1ad39f2aa6049287fb75205e83332cae740bdaede07594eac",
+      "bytes": 2054
+    },
+    {
+      "file": "numerical/tools/README.md",
+      "sha256": "060a195f89c0499bdc25aee49c810560b2591a95c5616dcd5aba3d92641a673d",
+      "bytes": 726
+    },
+    {
+      "file": "numerical/tools/tpu_exact_confirmation.py",
+      "sha256": "92d35b67fa2ed93b1d3169390d387e44fc1cc89695ba162df92ed575851b4f76",
+      "bytes": 9843
+    },
+    {
+      "file": "numerical/tools/verify_exact_tpu_archive.py",
+      "sha256": "e49cbfa10dcfc2ed7d5494fae84a6c53c0dccccbc6994f83190fcbd026e1e9f8",
+      "bytes": 4752
+    },
+    {
+      "file": "artifacts/current-evidence/Atomic-gdn2-actual-coordinate-results-20261017T140923Z.zip",
+      "sha256": "dd6854993c17d8f8a7e3fffdd3804d4c1481636c84768bb62ec2641090b615b6",
+      "bytes": 1846998
+    },
+    {
+      "file": "artifacts/current-evidence/Atomic-gdn2-all-paths-speed-results-20261017T121040Z.zip",
+      "sha256": "beec2c72c072e1a11efc82217585e04a409fd1a62a698dd83291b8b7362678cb",
+      "bytes": 644921
+    },
+    {
+      "file": "artifacts/current-evidence/Atomic-gdn2-exact-TPU-confirmation-results-20261017T150441Z.zip",
+      "sha256": "f1f25818567cbffe840395f2425c16cfd1a9007fd149caf9cc325c19865077ce",
+      "bytes": 1858147
+    },
+    {
+      "file": "artifacts/current-evidence/Atomic-gdn2-rounding-hypothesis-results-20261017T124518Z.zip",
+      "sha256": "4126f92f320c7d846b1b42ed24700deacb659b3b3138dd50ba091f68399f0ab4",
+      "bytes": 132192
+    },
+    {
+      "file": "artifacts/historical-documentation/attestation/README.md",
+      "sha256": "f8f002eda8c51afd22d8db19f25dc315dfeafe94c2f7a61cf9bf5178e569e28b",
+      "bytes": 1769
+    },
+    {
+      "file": "artifacts/historical-documentation/CHANGELOG.md",
+      "sha256": "48aab7893cb615c1ee589f90ecf6ae24abcfce410c24b47fcd47383ed8f021fb",
+      "bytes": 5170
+    },
+    {
+      "file": "artifacts/historical-documentation/docs/ATTESTATION.md",
+      "sha256": "436f1842ff33ebbae79413085190174c76448c8e91b6cfd0bbcd13bc2866e421",
+      "bytes": 2703
+    },
+    {
+      "file": "artifacts/historical-documentation/KNOWN_LIMITATIONS.md",
+      "sha256": "a76b204c1f5fa4b12fa1a4e0673ed35123f5124942dfc84d16b7866d40164dba",
+      "bytes": 11403
+    },
+    {
+      "file": "artifacts/historical-documentation/README-history.md",
+      "sha256": "2f71106f42fa64d436af57c1ac02c4b1cd2b70d192a3d5513a4874a942bcfefe",
+      "bytes": 236
+    },
+    {
+      "file": "artifacts/historical-documentation/README.md",
+      "sha256": "48bfd5e68da5fe581885ab5e810f61ec1c7367b6761c966660f8a051dd9a254a",
+      "bytes": 20489
+    },
+    {
+      "file": "artifacts/historical-documentation/ROADMAP.md",
+      "sha256": "50e374a79ee7256d75d48bbf90715992c5c5baba3d8107eff27d12274b8f277f",
+      "bytes": 11662
+    },
+    {
+      "file": "artifacts/historical-not-for-current-claims/atomic-matched-damping-results.zip",
+      "sha256": "d7acbba1b2279e98362f3b0059c2f2dec72dd9218f9a3b57976016cdcc9a0693",
+      "bytes": 261577
+    },
+    {
+      "file": "artifacts/historical-not-for-current-claims/atomic-ops-corrected-original-results (1).zip",
+      "sha256": "28fb51c90de305e34ab44b7f4e453f25babc0980f3c9467b76f939d77a8373dd",
+      "bytes": 474183
+    },
+    {
+      "file": "artifacts/historical-not-for-current-claims/atomic-ops-honest-benchmarks-20261016-partial (1).zip",
+      "sha256": "d37284df2867687f863f11156798a4d071dae8fccf4f9f80627e1293d6d3ce52",
+      "bytes": 370524
+    },
+    {
+      "file": "artifacts/historical-not-for-current-claims/atomic-ops-honest-benchmarks-20261016-partial (2).zip",
+      "sha256": "6080d9c1107d6525b517114eb9377700ab2d904853a6ce3e195fe12fb3959194",
+      "bytes": 428804
+    },
+    {
+      "file": "artifacts/historical-not-for-current-claims/atomic-ops-honest-benchmarks-20261016-partial.zip",
+      "sha256": "893ecc20d7db551ddba6c0f883cccc90b3668c186f95e83a9e24bd5708af9af1",
+      "bytes": 303156
+    },
+    {
+      "file": "artifacts/INDEX.json",
+      "sha256": "865d0598457fdd5cf8fa605aaa3c606d34567a239c2afd5b42360323971874bd",
+      "bytes": 4743
+    },
+    {
+      "file": "artifacts/README.md",
+      "sha256": "d469fff8fede77749d7dba14bdb9eec5637747376f2817d93bb9054cc5369ecc",
+      "bytes": 461
+    },
+    {
+      "file": "artifacts/supporting-diagnostics/Atomic-gdn2-E2E-root-cause-results-20261017T110247Z.zip",
+      "sha256": "e3b05976c5f43ec09d59b940fbc6f5a1e603f1b8ae978c425f0f1e9121854d65",
+      "bytes": 283653
+    },
+    {
+      "file": "artifacts/supporting-diagnostics/Atomic-gdn2-OLD-E2E-remat-results-20261017T102827Z.zip",
+      "sha256": "24b76cdbd0bcc7998b059721ce57539ccc712a9253382acced0e657b50a4f1a9",
+      "bytes": 233907
+    },
+    {
+      "file": "artifacts/supporting-diagnostics/Atomic-gdn2-vs-OLD-results-20261017T091230Z.zip",
+      "sha256": "e482e259c410c1a927ee804e25486ed9459b56d986ca13007e34e854eaa19c42",
+      "bytes": 119033
+    },
+    {
+      "file": "artifacts/supporting-diagnostics/Atomic-ops-final-results-20261017T083305Z.zip",
+      "sha256": "97de320f2d026dd0bb325f6347c92376ee848dfbd842985f423d069def4d7797",
+      "bytes": 223573
+    },
+    {
+      "file": "benchmarks/results/2026-10-17/final-publication-evidence-20261017-verification.json",
+      "sha256": "6e26c8cbd70743c53bfa61a2ff2c3649a95940ec1733eca29d5cd1c24dbc7a52",
+      "bytes": 1166
+    },
+    {
+      "file": "benchmarks/results/2026-10-17/speed-all-timing-samples.csv",
+      "sha256": "22d8ad60c204ae2cd45f4218bcffe631f8535b840b51b266c73ef1b8fb7ef8ac",
+      "bytes": 79410
+    },
+    {
+      "file": "benchmarks/results/2026-10-17/speed-summary.csv",
+      "sha256": "cb2b5e370bc78c2e90e232dc72124d924a5af8b83b07f1eb48ecb0377d1b4560",
+      "bytes": 3572
+    },
+    {
+      "file": "benchmarks/notebooks/all-paths-speed.ipynb",
+      "sha256": "30e6096146b6355390c118926c4f3bbcfc94f3d1f8f71e50b7ca860485be1351",
+      "bytes": 59344
+    }
+  ]
+}

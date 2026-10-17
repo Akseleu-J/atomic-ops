@@ -1,0 +1,15 @@
+{
+  "all-cases-table.tex": "f401ed3c9b7b2f75a472713c56d915363a9afce85381428446ab3c957c3ce418",
+  "all-gradients-and-updates.csv": "72fc6e0932ee5eb16024b1fc682d451ab98214339b5cb2d19f2e54359ec87ef8",
+  "epsilon-sensitivity.csv": "3e5f4af4e7f1f828f22e8930d62c9fed738667a79fe68d615dbae1eba49a9e6d",
+  "evidence-summary.json": "fd9cc69530b07e52cd2a586efa512c96e04ce56900669a0e775998e7a4355d74",
+  "execution-attestation.json": "b8856f90c48a255fd5b1387b1b92481079acf1134c4d544ea666bd451a183b7b",
+  "figure-caption.txt": "74376e1f312f2000fc21967f8de0e13a025ade25117387352b8d544b75d2ffef",
+  "METHODS-AND-LIMITATIONS.md": "c4fb2aaf8127b0b7531e8c65ba67e56a67bc93f9523afd4c8e4a79d7b41e0fb4",
+  "observed-coordinate-adam-replay.csv": "aa8e4b9eb20532b9a8bdaaffc325add16ccc6d3f32636a4d499869b1372cc4d3",
+  "oracle-checks.csv": "3f0b5714c6e7941f053efa1119790085aff62648ecf9503959bc39a0f7bf2497",
+  "precision-convergence.csv": "48c441fb6118fa8de1bbcc6bf5b78a3aba3a06a293c2984a4f54c0e2a44b22a3",
+  "rounding-adam-stress.pdf": "9decb3abd0b36f7a8168252f0e2933095fcb5464e2889b0b8562629744283611",
+  "rounding-adam-stress.png": "e0cba32987b8f1721d02f5408bd859de2b2bc21231226ce89a968a488566fbd8",
+  "rounding-adam-stress.svg": "97818a89118e441c4c3cafce3ea5dc3d4c8f6dd8e118addfe5606499aea8843f"
+}

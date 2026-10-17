@@ -1,0 +1,38 @@
+/content/atomic-exact-tpu-20261017T150441Z/venv/lib/python3.13/site-packages/jax/_src/cloud_tpu_init.py:90: UserWarning: Transparent hugepages are not enabled. TPU runtime startup and shutdown time should be significantly improved on TPU v5e and newer. If not already set, you may need to enable transparent hugepages in your VM image (sudo sh -c "echo always > /sys/kernel/mm/transparent_hugepage/enabled")
+  warnings.warn(
+EXACT_CONTROL_PASS zero
+EXACT_CONTROL_PASS cancellation_to_one
+EXACT_CONTROL_PASS subnormal_product
+EXACT_CONTROL_PASS overflowing_float32_products_cancel
+EXACT_CONTROL_PASS finite_binary32_bits_0
+EXACT_CONTROL_PASS finite_binary32_bits_1
+EXACT_CONTROL_PASS finite_binary32_bits_2
+EXACT_CONTROL_PASS finite_binary32_bits_3
+CAPTURE_EXACT_PASS (0, 'OLD', 'OLD')
+CAPTURE_EXACT_PASS (0, 'OLD', 'JAX_REF')
+CAPTURE_EXACT_PASS (0, 'OLD', 'NEW')
+CAPTURE_EXACT_PASS (0, 'JAX_REF', 'OLD')
+CAPTURE_EXACT_PASS (0, 'JAX_REF', 'JAX_REF')
+CAPTURE_EXACT_PASS (0, 'JAX_REF', 'NEW')
+CAPTURE_EXACT_PASS (0, 'NEW', 'OLD')
+CAPTURE_EXACT_PASS (0, 'NEW', 'JAX_REF')
+CAPTURE_EXACT_PASS (0, 'NEW', 'NEW')
+CAPTURE_EXACT_PASS (1, 'OLD', 'OLD')
+CAPTURE_EXACT_PASS (1, 'OLD', 'JAX_REF')
+CAPTURE_EXACT_PASS (1, 'OLD', 'NEW')
+CAPTURE_EXACT_PASS (1, 'JAX_REF', 'OLD')
+CAPTURE_EXACT_PASS (1, 'JAX_REF', 'JAX_REF')
+CAPTURE_EXACT_PASS (1, 'JAX_REF', 'NEW')
+CAPTURE_EXACT_PASS (1, 'NEW', 'OLD')
+CAPTURE_EXACT_PASS (1, 'NEW', 'JAX_REF')
+CAPTURE_EXACT_PASS (1, 'NEW', 'NEW')
+CAPTURE_EXACT_PASS (2, 'OLD', 'OLD')
+CAPTURE_EXACT_PASS (2, 'OLD', 'JAX_REF')
+CAPTURE_EXACT_PASS (2, 'OLD', 'NEW')
+CAPTURE_EXACT_PASS (2, 'JAX_REF', 'OLD')
+CAPTURE_EXACT_PASS (2, 'JAX_REF', 'JAX_REF')
+CAPTURE_EXACT_PASS (2, 'JAX_REF', 'NEW')
+CAPTURE_EXACT_PASS (2, 'NEW', 'OLD')
+CAPTURE_EXACT_PASS (2, 'NEW', 'JAX_REF')
+CAPTURE_EXACT_PASS (2, 'NEW', 'NEW')
+ALL_EXACT_DEVICE_CHECKS_PASSED tpu retained_percent 98.25422668457031

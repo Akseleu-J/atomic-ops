@@ -1,0 +1,708 @@
+{
+  "status": "completed",
+  "scope": "Controlled reduced CPU recurrence, not the actual full-LM exact-gradient oracle",
+  "environment": {
+    "backend": "cpu",
+    "jax": "0.11.2",
+    "numpy": "2.1.3",
+    "optax": "0.2.8",
+    "x64": true,
+    "python": "3.13.16 (main, Oct  1 2026, 15:40:24) [GCC 13.3.0]",
+    "platform": "Linux-6.6.122+-x86_64-with-glibc2.39",
+    "devices": [
+      "cpu:0"
+    ],
+    "default_matmul_precision": "highest"
+  },
+  "shape": [
+    1,
+    256,
+    1,
+    4
+  ],
+  "dtype_of_stored_inputs": "float32, promoted without changing their values",
+  "seeds_predeclared": [
+    0,
+    1,
+    2
+  ],
+  "decimal_precision": 80,
+  "cases": [
+    {
+      "seed": 0,
+      "mode": "natural",
+      "input_sha256": "8c1640ae5b71dfd31ef791816e05f429ee48d1ee232806a14a951c33ef8ff596",
+      "oracle_gradient_decimal": "-0.050553334884269630074183024058343037035125859713874568940713123916767134659266098623183619905881421557659159856",
+      "oracle_value_decimal": "1.8661768682806130261248203219232678007281580558582239928954498557137295494286974043276895174597289938976120235",
+      "oracle_precision_stability_abs": 2.6231836199058815e-81,
+      "central_finite_difference_abs_error": 3.187608323286534e-59,
+      "derivative_sum_abs_terms": 2.4056464873771093,
+      "derivative_cancellation_ratio": 47.58630647976617,
+      "stress_construction": "Predeclared pivot=max(abs(Decimal tangent)); only one fp32 coefficient adjusted; same stored inputs/objective for all algorithms",
+      "oracle_first_Adam_adaptive_update_lr1e-3": 0.0009999998021891525,
+      "results": [
+        {
+          "dtype": "fp32",
+          "algorithm": "SERIAL",
+          "gradient": -0.050553321838378906,
+          "objective": 1.866176724433899,
+          "gradient_abs_error_vs_decimal": 1.3045890723824183e-08,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": 0.0009999998021891013,
+          "adaptive_update_abs_error_vs_decimal_gradient": 5.117434254131581e-17,
+          "epsilon_sensitivity": {
+            "1e-08": 0.0009999998021891013,
+            "1e-07": 0.0009999980218945352,
+            "1e-06": 0.0009999802192975074
+          }
+        },
+        {
+          "dtype": "fp32",
+          "algorithm": "OLD",
+          "gradient": -0.05055330693721771,
+          "objective": 1.8661768436431885,
+          "gradient_abs_error_vs_decimal": 2.794705191767184e-08,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": 0.0009999998021890432,
+          "adaptive_update_abs_error_vs_decimal_gradient": 1.0928757898653885e-16,
+          "epsilon_sensitivity": {
+            "1e-08": 0.0009999998021890432,
+            "1e-07": 0.0009999980218939521,
+            "1e-06": 0.000999980219291677
+          }
+        },
+        {
+          "dtype": "fp32",
+          "algorithm": "WY",
+          "gradient": -0.050553515553474426,
+          "objective": 1.8661768436431885,
+          "gradient_abs_error_vs_decimal": 1.8066920479619534e-07,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": 0.0009999998021898594,
+          "adaptive_update_abs_error_vs_decimal_gradient": 7.068998164605489e-16,
+          "epsilon_sensitivity": {
+            "1e-08": 0.0009999998021898594,
+            "1e-07": 0.000999998021902115,
+            "1e-06": 0.000999980219373303
+          }
+        },
+        {
+          "dtype": "fp64",
+          "algorithm": "SERIAL",
+          "gradient": -0.0505533348842698,
+          "objective": 1.866176868280613,
+          "gradient_abs_error_vs_decimal": 1.7152261810641382e-16,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": 0.0009999998021891525,
+          "adaptive_update_abs_error_vs_decimal_gradient": 0.0,
+          "epsilon_sensitivity": {
+            "1e-08": 0.0009999998021891525,
+            "1e-07": 0.0009999980218950457,
+            "1e-06": 0.000999980219302612
+          }
+        },
+        {
+          "dtype": "fp64",
+          "algorithm": "OLD",
+          "gradient": -0.05055333488426966,
+          "objective": 1.866176868280613,
+          "gradient_abs_error_vs_decimal": 3.274474002826925e-17,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": 0.0009999998021891525,
+          "adaptive_update_abs_error_vs_decimal_gradient": 0.0,
+          "epsilon_sensitivity": {
+            "1e-08": 0.0009999998021891525,
+            "1e-07": 0.0009999980218950457,
+            "1e-06": 0.000999980219302612
+          }
+        },
+        {
+          "dtype": "fp64",
+          "algorithm": "WY",
+          "gradient": -0.050553334884269274,
+          "objective": 1.8661768682806132,
+          "gradient_abs_error_vs_decimal": 3.5583331859053556e-16,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": 0.0009999998021891525,
+          "adaptive_update_abs_error_vs_decimal_gradient": 0.0,
+          "epsilon_sensitivity": {
+            "1e-08": 0.0009999998021891525,
+            "1e-07": 0.0009999980218950457,
+            "1e-06": 0.000999980219302612
+          }
+        }
+      ],
+      "fp32_OLD_WY_opposite_sign": false
+    },
+    {
+      "seed": 0,
+      "mode": "cancellation_stress",
+      "input_sha256": "8c1640ae5b71dfd31ef791816e05f429ee48d1ee232806a14a951c33ef8ff596",
+      "oracle_gradient_decimal": "7.7005548209018100261510937339595290816085349997137452874672379456470477096866969198227656982436523569098E-9",
+      "oracle_value_decimal": "-0.62374344941552459622503559053999890507103865835121718216781977778821771264355886432541198178047098871308342965",
+      "oracle_precision_stability_abs": 1.3878669691982276e-79,
+      "central_finite_difference_abs_error": 3.287467237945647e-60,
+      "derivative_sum_abs_terms": 8.010164126838813,
+      "derivative_cancellation_ratio": 1040206103.7338015,
+      "stress_construction": "Predeclared pivot=max(abs(Decimal tangent)); only one fp32 coefficient adjusted; same stored inputs/objective for all algorithms",
+      "oracle_first_Adam_adaptive_update_lr1e-3": -0.00043504595753171316,
+      "results": [
+        {
+          "dtype": "fp32",
+          "algorithm": "SERIAL",
+          "gradient": 8.940696716308594e-08,
+          "objective": -0.6237432956695557,
+          "gradient_abs_error_vs_decimal": 8.170641234218412e-08,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": -0.0008994034293029571,
+          "adaptive_update_abs_error_vs_decimal_gradient": 0.00046435747177124396,
+          "epsilon_sensitivity": {
+            "1e-08": -0.0008994034293029571,
+            "1e-07": -0.00047203631683782497,
+            "1e-06": -8.206939174981574e-05
+          }
+        },
+        {
+          "dtype": "fp32",
+          "algorithm": "OLD",
+          "gradient": 8.940696716308594e-08,
+          "objective": -0.6237432956695557,
+          "gradient_abs_error_vs_decimal": 8.170641234218412e-08,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": -0.0008994034293029571,
+          "adaptive_update_abs_error_vs_decimal_gradient": 0.00046435747177124396,
+          "epsilon_sensitivity": {
+            "1e-08": -0.0008994034293029571,
+            "1e-07": -0.00047203631683782497,
+            "1e-06": -8.206939174981574e-05
+          }
+        },
+        {
+          "dtype": "fp32",
+          "algorithm": "WY",
+          "gradient": 2.9802322387695312e-08,
+          "objective": -0.6237435340881348,
+          "gradient_abs_error_vs_decimal": 2.2101767566793503e-08,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": -0.0007487583789057634,
+          "adaptive_update_abs_error_vs_decimal_gradient": 0.00031371242137405024,
+          "epsilon_sensitivity": {
+            "1e-08": -0.0007487583789057634,
+            "1e-07": -0.00022959775941975322,
+            "1e-06": -2.8939847716206132e-05
+          }
+        },
+        {
+          "dtype": "fp64",
+          "algorithm": "SERIAL",
+          "gradient": 7.700554943701476e-09,
+          "objective": -0.6237434494155247,
+          "gradient_abs_error_vs_decimal": 1.227996663918765e-16,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": -0.00043504596145114787,
+          "adaptive_update_abs_error_vs_decimal_gradient": 3.9194347095129756e-12,
+          "epsilon_sensitivity": {
+            "1e-08": -0.00043504596145114787,
+            "1e-07": -7.149967748751902e-05,
+            "1e-06": -7.64170953952853e-06
+          }
+        },
+        {
+          "dtype": "fp64",
+          "algorithm": "OLD",
+          "gradient": 7.700554638390145e-09,
+          "objective": -0.6237434494155247,
+          "gradient_abs_error_vs_decimal": 1.8251166538004156e-16,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": -0.0004350459517064323,
+          "adaptive_update_abs_error_vs_decimal_gradient": 5.825280850139253e-12,
+          "epsilon_sensitivity": {
+            "1e-08": -0.0004350459517064323,
+            "1e-07": -7.14996748553908e-05,
+            "1e-06": -7.641709238865571e-06
+          }
+        },
+        {
+          "dtype": "fp64",
+          "algorithm": "WY",
+          "gradient": 7.700554888190325e-09,
+          "objective": -0.6237434494155247,
+          "gradient_abs_error_vs_decimal": 6.728851516061868e-17,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": -0.0004350459596793814,
+          "adaptive_update_abs_error_vs_decimal_gradient": 2.147668219480703e-12,
+          "epsilon_sensitivity": {
+            "1e-08": -0.0004350459596793814,
+            "1e-07": -7.149967700895024e-05,
+            "1e-06": -7.641709484862536e-06
+          }
+        }
+      ],
+      "fp32_OLD_WY_opposite_sign": false
+    },
+    {
+      "seed": 1,
+      "mode": "natural",
+      "input_sha256": "2569049bc2c2511b37ec0604ced5c62f7ce9bbb776ff5ae804712e12c828587d",
+      "oracle_gradient_decimal": "0.31376581001006596272265075517575622308943011821853448013094411424374201022595270383948125620419098779995159700",
+      "oracle_value_decimal": "1.5733035704075730242903808532191658811064079357997341999297365499992498566574564369398379199063222651992363798",
+      "oracle_precision_stability_abs": 1.3839481256204191e-80,
+      "central_finite_difference_abs_error": 1.5885756257989774e-59,
+      "derivative_sum_abs_terms": 2.0542220732761525,
+      "derivative_cancellation_ratio": 6.546991443109275,
+      "stress_construction": "Predeclared pivot=max(abs(Decimal tangent)); only one fp32 coefficient adjusted; same stored inputs/objective for all algorithms",
+      "oracle_first_Adam_adaptive_update_lr1e-3": -0.0009999999681290972,
+      "results": [
+        {
+          "dtype": "fp32",
+          "algorithm": "SERIAL",
+          "gradient": 0.3137657642364502,
+          "objective": 1.5733035802841187,
+          "gradient_abs_error_vs_decimal": 4.577361576741015e-08,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": -0.0009999999681290924,
+          "adaptive_update_abs_error_vs_decimal_gradient": 4.7704895589362195e-18,
+          "epsilon_sensitivity": {
+            "1e-08": -0.0009999999681290924,
+            "1e-07": -0.0009999996812910155,
+            "1e-06": -0.0009999968129192956
+          }
+        },
+        {
+          "dtype": "fp32",
+          "algorithm": "OLD",
+          "gradient": 0.3137657642364502,
+          "objective": 1.5733035802841187,
+          "gradient_abs_error_vs_decimal": 4.577361576741015e-08,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": -0.0009999999681290924,
+          "adaptive_update_abs_error_vs_decimal_gradient": 4.7704895589362195e-18,
+          "epsilon_sensitivity": {
+            "1e-08": -0.0009999999681290924,
+            "1e-07": -0.0009999996812910155,
+            "1e-06": -0.0009999968129192956
+          }
+        },
+        {
+          "dtype": "fp32",
+          "algorithm": "WY",
+          "gradient": 0.3137657642364502,
+          "objective": 1.573303461074829,
+          "gradient_abs_error_vs_decimal": 4.577361576741015e-08,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": -0.0009999999681290924,
+          "adaptive_update_abs_error_vs_decimal_gradient": 4.7704895589362195e-18,
+          "epsilon_sensitivity": {
+            "1e-08": -0.0009999999681290924,
+            "1e-07": -0.0009999996812910155,
+            "1e-06": -0.0009999968129192956
+          }
+        },
+        {
+          "dtype": "fp64",
+          "algorithm": "SERIAL",
+          "gradient": 0.31376581001006604,
+          "objective": 1.573303570407573,
+          "gradient_abs_error_vs_decimal": 7.471609658873708e-17,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": -0.0009999999681290972,
+          "adaptive_update_abs_error_vs_decimal_gradient": 0.0,
+          "epsilon_sensitivity": {
+            "1e-08": -0.0009999999681290972,
+            "1e-07": -0.0009999996812910619,
+            "1e-06": -0.0009999968129197605
+          }
+        },
+        {
+          "dtype": "fp64",
+          "algorithm": "OLD",
+          "gradient": 0.31376581001006587,
+          "objective": 1.5733035704075733,
+          "gradient_abs_error_vs_decimal": 9.18173571050364e-17,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": -0.0009999999681290972,
+          "adaptive_update_abs_error_vs_decimal_gradient": 0.0,
+          "epsilon_sensitivity": {
+            "1e-08": -0.0009999999681290972,
+            "1e-07": -0.0009999996812910619,
+            "1e-06": -0.0009999968129197605
+          }
+        },
+        {
+          "dtype": "fp64",
+          "algorithm": "WY",
+          "gradient": 0.3137658100100659,
+          "objective": 1.573303570407573,
+          "gradient_abs_error_vs_decimal": 3.6306205873778575e-17,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": -0.0009999999681290972,
+          "adaptive_update_abs_error_vs_decimal_gradient": 0.0,
+          "epsilon_sensitivity": {
+            "1e-08": -0.0009999999681290972,
+            "1e-07": -0.0009999996812910619,
+            "1e-06": -0.0009999968129197605
+          }
+        }
+      ],
+      "fp32_OLD_WY_opposite_sign": false
+    },
+    {
+      "seed": 1,
+      "mode": "cancellation_stress",
+      "input_sha256": "2569049bc2c2511b37ec0604ced5c62f7ce9bbb776ff5ae804712e12c828587d",
+      "oracle_gradient_decimal": "5.39325242012324314316374574619015557048469691092971328667554030725321415347576939155198373068067495171979E-9",
+      "oracle_value_decimal": "0.49220586159206568100440960855209815906285083643080473073221293292555688005373747203250733467737514415723661782",
+      "oracle_precision_stability_abs": 3.3615769391551983e-80,
+      "central_finite_difference_abs_error": 4.286675540307253e-60,
+      "derivative_sum_abs_terms": 7.7396916688313375,
+      "derivative_cancellation_ratio": 1435069428.5980546,
+      "stress_construction": "Predeclared pivot=max(abs(Decimal tangent)); only one fp32 coefficient adjusted; same stored inputs/objective for all algorithms",
+      "oracle_first_Adam_adaptive_update_lr1e-3": -0.00035036470999934803,
+      "results": [
+        {
+          "dtype": "fp32",
+          "algorithm": "SERIAL",
+          "gradient": -5.960464477539063e-08,
+          "objective": 0.49220579862594604,
+          "gradient_abs_error_vs_decimal": 6.499789719551387e-08,
+          "gradient_sign_matches_oracle": false,
+          "first_Adam_adaptive_update_lr1e-3": 0.0008563314268427157,
+          "adaptive_update_abs_error_vs_decimal_gradient": 0.0012066961368420637,
+          "epsilon_sensitivity": {
+            "1e-08": 0.0008563314268427157,
+            "1e-07": 0.0003734518181427076,
+            "1e-06": 5.625177755617078e-05
+          }
+        },
+        {
+          "dtype": "fp32",
+          "algorithm": "OLD",
+          "gradient": 4.470348358154297e-08,
+          "objective": 0.49220579862594604,
+          "gradient_abs_error_vs_decimal": 3.931023116141973e-08,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": -0.0008171962854048657,
+          "adaptive_update_abs_error_vs_decimal_gradient": 0.0004668315754055177,
+          "epsilon_sensitivity": {
+            "1e-08": -0.0008171962854048657,
+            "1e-07": -0.0003089316336766127,
+            "1e-06": -4.2790594923917186e-05
+          }
+        },
+        {
+          "dtype": "fp32",
+          "algorithm": "WY",
+          "gradient": 1.9371509552001953e-07,
+          "objective": 0.49220556020736694,
+          "gradient_abs_error_vs_decimal": 1.8832184309989628e-07,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": -0.0009509118360891558,
+          "adaptive_update_abs_error_vs_decimal_gradient": 0.0006005471260898078,
+          "epsilon_sensitivity": {
+            "1e-08": -0.0009509118360891558,
+            "1e-07": -0.0006595340126357788,
+            "1e-06": -0.0001622791705047771
+          }
+        },
+        {
+          "dtype": "fp64",
+          "algorithm": "SERIAL",
+          "gradient": 5.393252566765483e-09,
+          "objective": 0.4922058615920657,
+          "gradient_abs_error_vs_decimal": 1.466422397817294e-16,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": -0.000350364716188032,
+          "adaptive_update_abs_error_vs_decimal_gradient": 6.188683951153379e-12,
+          "epsilon_sensitivity": {
+            "1e-08": -0.000350364716188032,
+            "1e-07": -5.117265513130374e-05,
+            "1e-06": -5.364321426463255e-06
+          }
+        },
+        {
+          "dtype": "fp64",
+          "algorithm": "OLD",
+          "gradient": 5.393252372476454e-09,
+          "objective": 0.49220586159206575,
+          "gradient_abs_error_vs_decimal": 4.764678952767299e-17,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": -0.0003503647079885296,
+          "adaptive_update_abs_error_vs_decimal_gradient": 2.010818432335998e-12,
+          "epsilon_sensitivity": {
+            "1e-08": -0.0003503647079885296,
+            "1e-07": -5.1172653382171424e-05,
+            "1e-06": -5.364321234253092e-06
+          }
+        },
+        {
+          "dtype": "fp64",
+          "algorithm": "WY",
+          "gradient": 5.393251845120517e-09,
+          "objective": 0.49220586159206575,
+          "gradient_abs_error_vs_decimal": 5.750027262246223e-16,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": -0.0003503646857327366,
+          "adaptive_update_abs_error_vs_decimal_gradient": 2.426661145247741e-11,
+          "epsilon_sensitivity": {
+            "1e-08": -0.0003503646857327366,
+            "1e-07": -5.117264863452653e-05,
+            "1e-06": -5.364320712539794e-06
+          }
+        }
+      ],
+      "fp32_OLD_WY_opposite_sign": false
+    },
+    {
+      "seed": 2,
+      "mode": "natural",
+      "input_sha256": "2ffafa717185dcd49abefb144f377564e8396bc19712fcc13c8e050bbb94b6b1",
+      "oracle_gradient_decimal": "0.020073411639972705948994636755052193514378829315620627328095034172370555966546850787210812682102764330050033221",
+      "oracle_value_decimal": "1.9218855297966409413610143102618142187915321873082163435307520479200133513147254347837767475276335648190506846",
+      "oracle_precision_stability_abs": 4.37872108126821e-80,
+      "central_finite_difference_abs_error": 3.417237055596655e-62,
+      "derivative_sum_abs_terms": 2.2058944346640623,
+      "derivative_cancellation_ratio": 109.89135649823508,
+      "stress_construction": "Predeclared pivot=max(abs(Decimal tangent)); only one fp32 coefficient adjusted; same stored inputs/objective for all algorithms",
+      "oracle_first_Adam_adaptive_update_lr1e-3": -0.0009999995018288273,
+      "results": [
+        {
+          "dtype": "fp32",
+          "algorithm": "SERIAL",
+          "gradient": 0.020073428750038147,
+          "objective": 1.92188560962677,
+          "gradient_abs_error_vs_decimal": 1.7110065441023662e-08,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": -0.0009999995018292519,
+          "adaptive_update_abs_error_vs_decimal_gradient": 4.2457357074532354e-16,
+          "epsilon_sensitivity": {
+            "1e-08": -0.0009999995018292519,
+            "1e-07": -0.0009999950183148542,
+            "1e-06": -0.0009999501853819876
+          }
+        },
+        {
+          "dtype": "fp32",
+          "algorithm": "OLD",
+          "gradient": 0.020073428750038147,
+          "objective": 1.9218854904174805,
+          "gradient_abs_error_vs_decimal": 1.7110065441023662e-08,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": -0.0009999995018292519,
+          "adaptive_update_abs_error_vs_decimal_gradient": 4.2457357074532354e-16,
+          "epsilon_sensitivity": {
+            "1e-08": -0.0009999995018292519,
+            "1e-07": -0.0009999950183148542,
+            "1e-06": -0.0009999501853819876
+          }
+        },
+        {
+          "dtype": "fp32",
+          "algorithm": "WY",
+          "gradient": 0.020073510706424713,
+          "objective": 1.92188560962677,
+          "gradient_abs_error_vs_decimal": 9.906645200718577e-08,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": -0.0009999995018312856,
+          "adaptive_update_abs_error_vs_decimal_gradient": 2.4583200058936328e-15,
+          "epsilon_sensitivity": {
+            "1e-08": -0.0009999995018312856,
+            "1e-07": -0.0009999950183351932,
+            "1e-06": -0.0009999501855853612
+          }
+        },
+        {
+          "dtype": "fp64",
+          "algorithm": "SERIAL",
+          "gradient": 0.02007341163997267,
+          "objective": 1.9218855297966408,
+          "gradient_abs_error_vs_decimal": 3.453260705272373e-17,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": -0.000999999501828827,
+          "adaptive_update_abs_error_vs_decimal_gradient": 2.168404344971009e-19,
+          "epsilon_sensitivity": {
+            "1e-08": -0.000999999501828827,
+            "1e-07": -0.0009999950183106079,
+            "1e-06": -0.000999950185339529
+          }
+        },
+        {
+          "dtype": "fp64",
+          "algorithm": "OLD",
+          "gradient": 0.02007341163997267,
+          "objective": 1.9218855297966406,
+          "gradient_abs_error_vs_decimal": 3.453260705272373e-17,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": -0.000999999501828827,
+          "adaptive_update_abs_error_vs_decimal_gradient": 2.168404344971009e-19,
+          "epsilon_sensitivity": {
+            "1e-08": -0.000999999501828827,
+            "1e-07": -0.0009999950183106079,
+            "1e-06": -0.000999950185339529
+          }
+        },
+        {
+          "dtype": "fp64",
+          "algorithm": "WY",
+          "gradient": 0.020073411639972782,
+          "objective": 1.9218855297966408,
+          "gradient_abs_error_vs_decimal": 7.648969540979193e-17,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": -0.000999999501828827,
+          "adaptive_update_abs_error_vs_decimal_gradient": 2.168404344971009e-19,
+          "epsilon_sensitivity": {
+            "1e-08": -0.000999999501828827,
+            "1e-07": -0.0009999950183106079,
+            "1e-06": -0.000999950185339529
+          }
+        }
+      ],
+      "fp32_OLD_WY_opposite_sign": false
+    },
+    {
+      "seed": 2,
+      "mode": "cancellation_stress",
+      "input_sha256": "2ffafa717185dcd49abefb144f377564e8396bc19712fcc13c8e050bbb94b6b1",
+      "oracle_gradient_decimal": "-1.96649247130190262137502293850338055153618878503753272074432261499076719779848803867711359658098376242E-10",
+      "oracle_value_decimal": "-0.32466516852260937785557692595701022375913789599639867770649515983768362771099505360862594724446438277930307482",
+      "oracle_precision_stability_abs": 5.277984880386771e-80,
+      "central_finite_difference_abs_error": 2.772074432261499e-60,
+      "derivative_sum_abs_terms": 7.452106200725302,
+      "derivative_cancellation_ratio": 37895421973.27451,
+      "stress_construction": "Predeclared pivot=max(abs(Decimal tangent)); only one fp32 coefficient adjusted; same stored inputs/objective for all algorithms",
+      "oracle_first_Adam_adaptive_update_lr1e-3": 1.928567339761505e-05,
+      "results": [
+        {
+          "dtype": "fp32",
+          "algorithm": "SERIAL",
+          "gradient": 5.960464477539063e-08,
+          "objective": -0.3246651291847229,
+          "gradient_abs_error_vs_decimal": 5.980129402252082e-08,
+          "gradient_sign_matches_oracle": false,
+          "first_Adam_adaptive_update_lr1e-3": -0.0008563314268427157,
+          "adaptive_update_abs_error_vs_decimal_gradient": 0.0008756171002403308,
+          "epsilon_sensitivity": {
+            "1e-08": -0.0008563314268427157,
+            "1e-07": -0.0003734518181427076,
+            "1e-06": -5.625177755617078e-05
+          }
+        },
+        {
+          "dtype": "fp32",
+          "algorithm": "OLD",
+          "gradient": 7.450580596923828e-09,
+          "objective": -0.32466524839401245,
+          "gradient_abs_error_vs_decimal": 7.64722984405402e-09,
+          "gradient_sign_matches_oracle": false,
+          "first_Adam_adaptive_update_lr1e-3": -0.0004269531638527379,
+          "adaptive_update_abs_error_vs_decimal_gradient": 0.00044623883725035293,
+          "epsilon_sensitivity": {
+            "1e-08": -0.0004269531638527379,
+            "1e-07": -6.933960296476173e-05,
+            "1e-06": -7.3954799773000185e-06
+          }
+        },
+        {
+          "dtype": "fp32",
+          "algorithm": "WY",
+          "gradient": -6.705522537231445e-08,
+          "objective": -0.3246649205684662,
+          "gradient_abs_error_vs_decimal": 6.685857612518426e-08,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": 0.0008702229478704122,
+          "adaptive_update_abs_error_vs_decimal_gradient": 0.0008509372744727971,
+          "epsilon_sensitivity": {
+            "1e-08": 0.0008702229478704122,
+            "1e-07": 0.0004013955578035293,
+            "1e-06": 6.284138231825602e-05
+          }
+        },
+        {
+          "dtype": "fp64",
+          "algorithm": "SERIAL",
+          "gradient": -1.9664915529293836e-10,
+          "objective": -0.3246651685226094,
+          "gradient_abs_error_vs_decimal": 9.183725190197528e-17,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": 1.9285664564702662e-05,
+          "adaptive_update_abs_error_vs_decimal_gradient": 8.832912388166171e-12,
+          "epsilon_sensitivity": {
+            "1e-08": 1.9285664564702662e-05,
+            "1e-07": 1.962632053574521e-06,
+            "1e-06": 1.966104920057637e-07
+          }
+        },
+        {
+          "dtype": "fp64",
+          "algorithm": "OLD",
+          "gradient": -1.9664943284869452e-10,
+          "objective": -0.3246651685226093,
+          "gradient_abs_error_vs_decimal": 1.8571850425431386e-16,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": 1.9285691260031433e-05,
+          "adaptive_update_abs_error_vs_decimal_gradient": 1.7862416383393693e-11,
+          "epsilon_sensitivity": {
+            "1e-08": 1.9285691260031433e-05,
+            "1e-07": 1.9626348182479697e-06,
+            "1e-06": 1.9661076945238978e-07
+          }
+        },
+        {
+          "dtype": "fp64",
+          "algorithm": "WY",
+          "gradient": -1.9664875283709193e-10,
+          "objective": -0.32466516852260924,
+          "gradient_abs_error_vs_decimal": 4.942930983285946e-16,
+          "gradient_sign_matches_oracle": true,
+          "first_Adam_adaptive_update_lr1e-3": 1.9285625856473365e-05,
+          "adaptive_update_abs_error_vs_decimal_gradient": 4.754114168444923e-11,
+          "epsilon_sensitivity": {
+            "1e-08": 1.9285625856473365e-05,
+            "1e-07": 1.9626280447979933e-06,
+            "1e-06": 1.9661008970815564e-07
+          }
+        }
+      ],
+      "fp32_OLD_WY_opposite_sign": true
+    }
+  ],
+  "zero_gradient_control": {
+    "adaptive_update_with_zero_gradient_zero_moments_no_weight_decay": -0.0,
+    "epsilon_does_not_create_update": true,
+    "with_weight_decay_only_expected": 2.789476241105149e-07
+  },
+  "actual_coordinate_replay_provenance": {
+    "coordinate": "block_6/q_conv_w[236,2]",
+    "seed": 0,
+    "previous_TPU_diagnostic_archive_sha256": "e3b05976c5f43ec09d59b940fbc6f5a1e603f1b8ae978c425f0f1e9121854d65",
+    "initial_parameter": -0.02789476327598095,
+    "lr": 0.001,
+    "weight_decay": 0.01,
+    "epsilon": 1e-08,
+    "scope": "Previously observed clipped gradients transcribed into CPU replay, not a fresh full-LM execution."
+  },
+  "actual_coordinate_replay": [
+    {
+      "path": "NEW",
+      "observed_clipped_gradient": 1.3835218731555054e-08,
+      "Optax_first_update_CPU": -0.0005801738006994128
+    },
+    {
+      "path": "OLD",
+      "observed_clipped_gradient": -9.705033074134847e-09,
+      "Optax_first_update_CPU": 0.0004927943809889257
+    }
+  ],
+  "interpretation": {
+    "conclusions_to_check": [
+      "Do FP64 scan/WY errors shrink relative to the independent oracle?",
+      "Does cancellation stress increase sensitivity versus the natural objective?",
+      "Do float32 gradient differences amplify under first-step AdamW near epsilon?"
+    ],
+    "not_proven": [
+      "The actual full-LM coordinate has mathematical gradient exactly zero",
+      "The original full-LM discrepancy is exclusively rounding and no implementation bug exists",
+      "Four completed training runs prove no effect on model quality"
+    ],
+    "scope": "Reduced stress case deliberately constructed for cancellation; not an estimate of its frequency in training."
+  }
+}

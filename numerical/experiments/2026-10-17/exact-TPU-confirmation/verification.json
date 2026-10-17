@@ -1,0 +1,22 @@
+{
+  "archive_sha256": "f1f25818567cbffe840395f2425c16cfd1a9007fd149caf9cc325c19865077ce",
+  "manifest_files": 10,
+  "all_hashes_match": true,
+  "executed_source_matches_prepared_notebook": true,
+  "reported_backend": "tpu",
+  "completed_controls": 8,
+  "exact_device_bins_independently_verified": 27,
+  "exact_decompositions_independently_verified": 9,
+  "permutation_checks_reported_pass": 9,
+  "independent_verification": "stdlib-only IEEE binary32 decoding and unbounded integer multiplication/addition, checked against saved raw device bins",
+  "retained_difference_percent": {
+    "device_FP32": 98.25422668457031,
+    "host_high_precision_reference": 98.25422003628454,
+    "absolute_tolerance_percentage_points": 0.001,
+    "passed": true,
+    "scope": "This archived seed-0 OLD/NEW probe pair only."
+  },
+  "status": "verified for the stated frozen-capture scope",
+  "new_full_model_execution": false,
+  "universal_kernel_correctness_proven": false
+}

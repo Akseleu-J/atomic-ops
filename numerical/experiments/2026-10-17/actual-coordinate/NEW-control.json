@@ -1,0 +1,111 @@
+{
+  "status": "completed",
+  "seeds": [
+    {
+      "seed": 0,
+      "input_sha256": "fe2934b78fa7d770a17174a34da3c620bf0f819483cc015747f727dc5f7f0c84",
+      "parameters_sha256": "0cdd4145b2bf66662409c927d05e913b688f3093f2d77164be70119dd75c2fe6",
+      "loss": 6.027902603149414,
+      "raw_coordinate_gradient": 2.773595042526722e-08,
+      "global_gradient_norm": 2.004735231399536,
+      "clipped_coordinate_gradient": 1.3835218731555054e-08,
+      "initial_parameter": -0.02789476327598095
+    },
+    {
+      "seed": 1,
+      "input_sha256": "ca571cef8bbccfd94b67d619e01355fd30a4f2ea4deb600a87cdee4264489352",
+      "parameters_sha256": "77bd3cb0f8126345bbf3d1ac36042f23dabc6a12154b959f136b285dfd4c8052",
+      "loss": 6.040876388549805,
+      "raw_coordinate_gradient": 0.002448117360472679,
+      "global_gradient_norm": 1.9670909643173218,
+      "clipped_coordinate_gradient": 0.001244536935444822,
+      "initial_parameter": -0.05081478878855705
+    },
+    {
+      "seed": 2,
+      "input_sha256": "48ac10b9ac584549175c0f3f1a8433da6b77f37dfab21c0bde03714fb851be8a",
+      "parameters_sha256": "14f2284c910cfa7ad8998edb6070c7c37190cb2a2f54fb6eb5667315ad6c339b",
+      "loss": 6.037285327911377,
+      "raw_coordinate_gradient": 0.0019296720856800675,
+      "global_gradient_norm": 1.9833542108535767,
+      "clipped_coordinate_gradient": 0.0009729336671786903,
+      "initial_parameter": -0.022430898621678352
+    }
+  ],
+  "path": "NEW",
+  "phase": "control",
+  "environment": {
+    "python": "3.13.16 (main, Oct  1 2026, 15:40:24) [GCC 13.3.0]",
+    "platform": "Linux-6.6.122+-x86_64-with-glibc2.39",
+    "backend": "tpu",
+    "device_kinds": [
+      "TPU v5 lite"
+    ],
+    "devices": [
+      "TPU_0(process=0,(0,0,0,0))"
+    ],
+    "implementation_identity": {
+      "candidate_module": "atomic_gdn2.pipeline",
+      "candidate_source": "/content/atomic-actual-coordinate-20261017T140923Z/source/atomic_gdn2/pipeline.py",
+      "candidate_source_sha256": "e7169d3f6d3ce2ed72fd14b25db1068aed2e8dce01c121a96ce35798e76297cf",
+      "baseline": "candidate_common.old_impl: affine associative_scan",
+      "pure_JAX_reference": "atomic_ops.reference.gdn2_chunked_wy_reference: validation only"
+    },
+    "packages": {
+      "jax": "0.11.2",
+      "jaxlib": "0.11.2",
+      "libtpu": "0.0.48.1",
+      "numpy": "2.1.3",
+      "flax": "0.12.9",
+      "optax": "0.2.8"
+    },
+    "matmul_precision": "highest",
+    "flags": {
+      "XLA_FLAGS": null,
+      "JAX_PLATFORMS": null
+    }
+  },
+  "config": {
+    "vocab_size": 256,
+    "d_model": 512,
+    "n_heads": 6,
+    "d_head": 128,
+    "n_layers": 8,
+    "mlp_mult": 2,
+    "d_conv": 4,
+    "g_max": 1.25,
+    "decay_init": 0.05
+  },
+  "target": {
+    "block": "block_6",
+    "parameter": "q_conv_w",
+    "channel": 236,
+    "tap": 2
+  },
+  "batch": 8,
+  "length": 2048,
+  "parameters": 34873952,
+  "OLD_block_remat": false,
+  "kernel_config": {
+    "bt": 128,
+    "bc": 64,
+    "mb": 8,
+    "score_bs": 128,
+    "bs2": 64,
+    "diag": "btl",
+    "diff_clip": 20.0,
+    "clip": 10000.0,
+    "wy_eps": 0.0,
+    "dot_mode": "highest",
+    "solve_dot_mode": "bf16x3",
+    "b3_dot_mode": "bf16x3",
+    "group": null,
+    "max_chunks_per_call": 32,
+    "interpret": false,
+    "vmem_mb": 150.0,
+    "g_max": 2.5
+  },
+  "scope": "Diagnostic execution, not a speed benchmark. Instrumentation can change XLA arithmetic ordering.",
+  "compile_seconds": 92.77788659699996,
+  "compiled_memory": "CompiledMemoryStats(generated_code_size_in_bytes=452428288, argument_size_in_bytes=139651072, output_size_in_bytes=139587072, alias_size_in_bytes=0, temp_size_in_bytes=10916764160, host_generated_code_size_in_bytes=0, host_argument_size_in_bytes=0, host_output_size_in_bytes=0, host_alias_size_in_bytes=0, host_temp_size_in_bytes=0)"
+}

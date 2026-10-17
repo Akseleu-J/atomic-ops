@@ -1,0 +1,36 @@
+{
+  "status": "executions_finished",
+  "cases": [
+    {
+      "case": "NEW-control",
+      "exit_code": 0
+    },
+    {
+      "case": "OLD-control",
+      "exit_code": 0
+    },
+    {
+      "case": "JAX_REF-control",
+      "exit_code": 0
+    },
+    {
+      "case": "NEW-probe",
+      "exit_code": 0
+    },
+    {
+      "case": "OLD-probe",
+      "exit_code": 0
+    },
+    {
+      "case": "JAX_REF-probe",
+      "exit_code": 0
+    },
+    {
+      "case": "analysis",
+      "exit_code": 0
+    }
+  ],
+  "purpose": "Actual-coordinate mechanism audit; not timing",
+  "analysis_exit_code": 0,
+  "analysis_status": "completed"
+}

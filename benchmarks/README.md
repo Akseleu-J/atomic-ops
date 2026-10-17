@@ -1,64 +1,21 @@
-# GDN‑2 Pallas: Performance Benchmarks
+# Current benchmark evidence: 17 October 2026
 
-All numbers below were measured on **TPU v5e‑8** (Kaggle/Google Cloud) with  
-`jax==0.11.1`, `jaxlib==0.11.1`, `libtpu==0.0.46.1`.
+Pinned kernel revision: 11616acd8a061768a38feb12c58e5e329952f5d5. Four paths: OLD affine associative_scan, the author's pure-JAX WY JAX_REF, earlier PALLAS_V1 and current atomic_gdn2. Single TPU v5e; zero damping; fixed-state replay, full-tree synchronization. Three seeds, three rounds, two warmups and four timed calls per round for every path. Compilation, host checks and file IO are outside timing.
 
-We compare three implementations:
-- **OLD** – Associative scan baseline.
-- **JAX_REF** – Chunked WY recurrence in pure JAX.
-- **PALLAS** – Our custom Pallas kernels (this library).
+Peak gradient-microbenchmark OLD/atomic_gdn2 ratio: 411.75 +/- 5.13x, B4 H6 L2048 D128. Complete synthetic 34,873,952-parameter LM step: 117.76 +/- 0.15x, B8 L2048; OLD block remat. All six kernel shapes and all four implementations are in results/2026-10-17/speed-summary.csv. Sample-level data contain 1008 timed calls. SD is across three seed summaries, not a confidence interval or cross-VM variation.
 
----
+Raw source/metadata/logs: [four-path archive](../artifacts/current-evidence/Atomic-gdn2-all-paths-speed-results-20261017T121040Z.zip).
 
-## ⚡ Speed (Full forward+backward cycle)
+Numerical snapshot PASS and parameter-update-difference FAIL are both retained. See ../numerical/. These timings do not prove optimizer-trajectory equivalence or a measured speedup of the released 307M/334M models.
 
-The most important metric for training. Measured in **milliseconds (ms)**.
+## Reproduce and inspect
 
-| Config | Dtype | OLD (ms) | JAX_REF (ms) | PALLAS (ms) | Speedup vs OLD | Speedup vs JAX_REF |
-|--------|-------|----------|--------------|-------------|----------------|---------------------|
-| **train_shape (B=8,L=4096)** | FP32 | 4762.70 | 460.03 | **175.20** | **27.18×** | **2.63×** |
-| **train_shape (B=8,L=4096)** | BF16 | 2320.27 | 594.86 | **174.20** | **13.32×** | **3.41×** |
+Open [the four-path Colab notebook](notebooks/all-paths-speed.ipynb). It embeds the executed harness and pins the benchmarked source revision. Earlier root-level benchmark entry points and notebooks are development/historical tools, not substitutes for this frozen protocol.
 
-> **Key takeaway:** In BF16 (the real-world dtype for TPU training), PALLAS is **3.4× faster** than the pure-JAX WY reference and **13.3× faster** than the legacy scan.
+- [All paths and shapes](results/2026-10-17/speed-summary.csv)
+- [Every timed sample](results/2026-10-17/speed-all-timing-samples.csv)
+- [Verification receipt](results/2026-10-17/final-publication-evidence-20261017-verification.json)
+- [Detailed scope and caveats](../KNOWN_LIMITATIONS.md)
+- [Earlier v0.1 raw timing records](raw/benchmark_speed_final_averaged.md)
 
----
-
-## 🧠 Memory (Peak HBM)
-
-Peak memory usage measured in **Megabytes (MB)** during the full forward+backward pass (process-isolated).  
-Lower is better.
-
-| Config | Dtype | OLD (MB) | JAX_REF (MB) | PALLAS (MB) |
-|--------|-------|----------|--------------|-------------|
-| train_shape_B8_L4096 (B=8) | fp32 | 1252.746 | 1250.011 | 1238.111 |
-| train_shape_B8_L4096 (B=8) | bf16 | 915.486 | 915.486 | 915.486 |
-
-
-
-
----
-
-## 📊 Full Results & Raw Data
-
-For complete per‑stage breakdowns (fwd / bwd / fwdbwd) and all configs:
-
-- **Speed (detailed tables):** [`benchmark_speed_final_averaged.md`](raw/benchmark_speed_final_averaged.md)
-- **Speed (machine‑readable JSON):** [`benchmark_speed_final_averaged.json`](raw/benchmark_speed_final_averaged.json)
-- **Memory (detailed tables):** [`benchmark_memory_final_averaged.md`](raw/benchmark_memory_final_averaged.md)
-- **Memory (machine‑readable JSON):** [`benchmark_memory_final_averaged.json`](raw/benchmark_memory_final_averaged.json)
-
----
-
-
-> **Note on bwd vs fwd+bwd timings:** the `bwd` column is measured via `jax.vjp(loss, ...)`, which re-runs the forward pass internally to build the VJP closure before the backward pass executes. This is why `bwd` and `fwdbwd` numbers are nearly identical in the tables above/below -- it is an artifact of the measurement method (the forward cost is unavoidably included in both), not a claim that backward alone costs the same as forward+backward combined.
-
-## 🔁 Reproducibility
-
-To reproduce these numbers yourself, run:
-
-```bash
-# Speed benchmarks
-python run_speed_benchmark.py
-
-# Memory benchmarks (requires a clean process fork)
-python run_memory_benchmark.py
+Latency: median of timed calls per round, then median of round medians per seed. Speedup: paired round ratios summarized by seed; aggregate mean and sample SD across seeds. Kernel objective: sum of squared outputs and final state, differentiated with respect to six sequence inputs. E2E: eight-layer synthetic LM, fixed initial state, block-rematerialized OLD. NEW uses bt=128, bc=64, score_bs=128, bs2=64, mb=8, BTL, score precision highest and solve/B3 bf16x3; PALLAS_V1 uses mb=16. No new memory or forward-only headline is claimed.

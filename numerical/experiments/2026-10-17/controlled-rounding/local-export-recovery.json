@@ -1,0 +1,8 @@
+{
+  "source": "User supplied Colab report, unchanged",
+  "reason": "Remote publication generation exit_code=1; stderr was not included in archive, root cause not established.",
+  "local_export": "completed",
+  "input_hashes_checked": true,
+  "matplotlib_version": "3.11.2",
+  "generator_sha256": "e621ed2705ac75cd8366043000cc981fc352e799a1b87d49d6961dbf3c5c0c1d"
+}

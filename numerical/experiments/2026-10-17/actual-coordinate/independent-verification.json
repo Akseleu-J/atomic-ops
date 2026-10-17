@@ -1,0 +1,18 @@
+{
+  "archive_sha256": "dd6854993c17d8f8a7e3fffdd3804d4c1481636c84768bb62ec2641090b615b6",
+  "manifest_files": 70,
+  "all_hashes_match": true,
+  "sources_match_prepared_notebook": true,
+  "completed_control_probe_seed_pairs": 9,
+  "exact_contractions_independently_verified": 9,
+  "decompositions_independently_verified": 9,
+  "independent_method": "Decode IEEE binary32 into signed integer significands and binary exponents; multiply and align in unbounded integers. Compare with archived Fraction-based results.",
+  "all_parameter_and_input_hashes_match_between_paths": true,
+  "all_convolution_shift_checks_pass": true,
+  "seed0_OLD_minus_NEW_TPU_gradient_difference": -4.8879883252084255e-08,
+  "seed0_OLD_minus_NEW_exact_frozen_difference": -4.8026548043981854e-08,
+  "seed0_final_contraction_residual_difference": -8.533352081024016e-10,
+  "seed0_exact_frozen_difference_over_TPU_difference": 0.9825422003628452,
+  "seed0_input_term_over_exact_frozen_difference": 0.9029525964444702,
+  "decomposition_warning": "Fractions of this algebraic decomposition depend on its order; not unique causal attribution."
+}

@@ -1,0 +1,5 @@
+# Evidence is byte-preserved so SHA256 manifests survive clone on every OS.
+artifacts/** -text -diff
+numerical/** -text
+benchmarks/results/** -text
+benchmarks/notebooks/** -text

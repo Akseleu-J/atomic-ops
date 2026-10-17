@@ -1,0 +1,45 @@
+{
+  "author": "Akseleu Omirbay",
+  "kind": "Self-recorded computational evidence; not independent certification",
+  "experiment_completed": true,
+  "environment": {
+    "backend": "cpu",
+    "jax": "0.11.2",
+    "numpy": "2.1.3",
+    "optax": "0.2.8",
+    "x64": true,
+    "python": "3.13.16 (main, Oct  1 2026, 15:40:24) [GCC 13.3.0]",
+    "platform": "Linux-6.6.122+-x86_64-with-glibc2.39",
+    "devices": [
+      "cpu:0"
+    ],
+    "default_matmul_precision": "highest"
+  },
+  "stored_input_shape": [
+    1,
+    256,
+    1,
+    4
+  ],
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "decimal_precision_digits": [
+    80,
+    110
+  ],
+  "report_sha256": "74704779c10f1b3c214d09874b78633816f7cc7c321c8c11c984afac30698f34",
+  "observed_coordinate_replay_provenance": {
+    "coordinate": "block_6/q_conv_w[236,2]",
+    "seed": 0,
+    "previous_TPU_diagnostic_archive_sha256": "e3b05976c5f43ec09d59b940fbc6f5a1e603f1b8ae978c425f0f1e9121854d65",
+    "initial_parameter": -0.02789476327598095,
+    "lr": 0.001,
+    "weight_decay": 0.01,
+    "epsilon": 1e-08,
+    "scope": "Previously observed clipped gradients transcribed into CPU replay, not a fresh full-LM execution."
+  },
+  "scope": "Controlled reduced CPU experiment. No full-LM exact-gradient or quality claim; no speed claim."
+}

@@ -33,7 +33,7 @@ benchmarks, but they are not a substitute for the end-to-end gate.
 - Fused forward + backward Pallas kernels (Kernel A/B/C/D, B1-B5),
   `custom_vjp` trainable wrapper — v0.1.0.
 - Direct kernel H-scaling measurements on TPU v5e-1 (B=4, D=128, `bs2=64`)
-  — v0.2.0. Peak 468x at H=6, L=2048. See `attestation/scaling.json`.
+  — v0.2.0. Current peak gradient microbenchmark 411.75 ± 5.13× at H=6, L=2048. See [current protocol](benchmarks/README.md).
 
 (Nothing from the `use_centering` hypothesis appears in this section —
 no code for it exists yet.)
@@ -160,18 +160,13 @@ in the repo where this idea should be mentioned.
 
 ### Sharded H-scaling on TPU v5e-8
 
-**Status:** VALIDATED-HYPOTHESIS, not yet run.
+**Status:** HYPOTHESIS-ONLY, not yet run.
 
-Single-chip measurements on TPU v5e-1 (B=4, D=128, `bs2=64`) show kernel
-speedup peaks at H=6 (468x at L=2048, 448x at L=4096) because the fused
-kernel's tile pack fits cleanly up to 6 heads, after which it stops
-fitting and speedup drops.
+Current measurements cover H≤6; extension to larger head counts and multiple chips remains unmeasured under the current protocol. No universal six-head limit is established.
 
 On TPU v5e-8, H is a natural sharding axis (each chip holds H/8 heads
 locally; state is per-head independent, no cross-chip sync in the scan).
-The per-chip tile-pack sweet spot of 6 heads predicts a **global peak
-near H=48** (H_local = 6), with speedup roughly flat from H=32 to H=64.
-This is a prediction, not a measurement — nothing below has been run.
+A head-sharding study could evaluate larger global head counts. No global sweet spot or scaling ratio is established; nothing below has been run.
 
 **Plan:**
 - Mesh: `(8,)` shard over the `h` axis

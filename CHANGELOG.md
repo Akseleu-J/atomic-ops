@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Documentation and evidence — 2026-10-17
+
+- Add current four-path timings: 411.75 ± 5.13× peak gradient microbenchmark and 117.76 ± 0.15× synthetic LM step relative to OLD.
+- Add numerical cancellation case study, original captures, exact TPU confirmation, independent verifier, reproduction notebooks and raw logs.
+- Preserve historical and incomplete runs with roles and hashes; update README and known limitations.
+- Kernel source, public APIs and package version unchanged. No new release is created.
+
+
 ## [0.2.0] — 2026-09-27
 
 ### Added — `atomic_gdn2` package
@@ -22,26 +30,9 @@
 - `beta/gdn2_hybrid.py` hybrid path. Closed as `HYPOTHESIS-REJECTED`.
   Code preserved at `archive/gdn2_hybrid.py`.
 
-### Headline
+### Historical performance
 
-Kernel speedup vs `associative_scan` — direct measurement, single TPU v5e-1,
-B=4, D=128, `bs2=64`:
-
-| H | L=2048 | L=4096 |
-|---|--------|--------|
-| 2 | 193x | 207x |
-| 4 | 300x | 322x |
-| 6 | **468x** | **448x** |
-
-**End-to-end training step:** on a 27.5M-parameter LM (B=8, L=2048, H=6,
-D=128), `atomic_gdn2` v0.2.0 runs at **103.29 ms/step** (158,626 tok/s)
-vs `associative_scan` OLD at **20674.62 ms/step** (792 tok/s) — a
-**200.17× speedup**. The v0.2.0 fused forward is also faster than both the
-v0.1.0 `atomic_ops` Pallas forward and the pure-JAX WY reference, closing
-the v0.1.0 forward-speed gap documented in `KNOWN_LIMITATIONS.md` section 2
-(which now applies to v0.1.0 only).
-
-Speedup peaks at H=6 on a single chip; beyond H=6 requires sharding (TPU v5e-8).
+Earlier headline measurements are superseded for current reporting by the October 2026 three-seed experiment. Original documentation is preserved in `artifacts/historical-documentation/CHANGELOG.md`; raw historical records remain unchanged.
 
 ### Known issues
 

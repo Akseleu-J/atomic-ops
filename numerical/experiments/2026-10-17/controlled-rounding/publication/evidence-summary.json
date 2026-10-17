@@ -1,0 +1,13 @@
+{
+  "experiment_status": "completed",
+  "all_predeclared_cases_complete": true,
+  "controlled_stress_cases": 3,
+  "controlled_stress_OLD_WY_fp32_opposite_signs": 1,
+  "natural_cases": 3,
+  "natural_OLD_WY_fp32_opposite_signs": 0,
+  "precision_comparisons": 18,
+  "fp64_error_smaller_count": 18,
+  "maximum_decimal_precision_check_absolute_error": 1.3878669691982276e-79,
+  "maximum_finite_difference_absolute_error": 3.187608323286534e-59,
+  "scope": "Controlled reduced CPU experiment. No full-LM exact-gradient or quality claim; no speed claim."
+}

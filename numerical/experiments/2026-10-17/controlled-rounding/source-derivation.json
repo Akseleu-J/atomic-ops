@@ -1,0 +1,19 @@
+{
+  "archive_sha256": "97de320f2d026dd0bb325f6347c92376ee848dfbd842985f423d069def4d7797",
+  "original_sources_sha256": {
+    "candidate_common.py": "03a514716fb4e1279e1c9e96eb8f1458e3627ac86124250dd3c8af6512176d10",
+    "atomic_ops/reference.py": "ee7ecc97a2ef474e29219256646ee7d118045cc798798aaed6851fd0d246ad3d"
+  },
+  "transformations": [
+    "OLD: extract old_impl and old_factory; g.astype(float32) -> g.astype(q.dtype), identical for fp32.",
+    "WY: replace hardcoded jnp.float32 with REF_DTYPE; separate fp32 and fp64 modules. Algorithm unchanged.",
+    "Independent SERIAL and Decimal implementations written from literal recurrence; no WY/scan reuse."
+  ],
+  "derived_sources_sha256": {
+    "hypothesis_old.py": "243d1a0ee4096ff7e6220bc27150c6a589a71ef562394184dc3ffd4d773a5c4b",
+    "rounding_adam_hypothesis.py": "aeb6af4ee43f9da520f20174f001187087a2770508081c5d33d841861cc4e7de",
+    "rounding_publication_bundle.py": "e621ed2705ac75cd8366043000cc981fc352e799a1b87d49d6961dbf3c5c0c1d",
+    "hypothesis_wy32.py": "97fa8f28564d098c6200ff910f937e550328e0cc5b5d403d3155a50765b08a23",
+    "hypothesis_wy64.py": "8eb1a9523f21605d24c2a88541fe431e265e56f711cbe2888ebfd3580e7f5ae0"
+  }
+}

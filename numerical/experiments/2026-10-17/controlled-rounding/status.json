@@ -1,0 +1,11 @@
+{
+  "command": [
+    "/content/atomic-rounding-20261017T124518Z/venv/bin/python",
+    "-u",
+    "/content/atomic-rounding-20261017T124518Z/results/executed-source/rounding_adam_hypothesis.py",
+    "--output",
+    "/content/atomic-rounding-20261017T124518Z/results/report.json"
+  ],
+  "status": "completed",
+  "exit_code": 0
+}

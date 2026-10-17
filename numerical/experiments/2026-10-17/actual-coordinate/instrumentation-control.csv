@@ -1,0 +1,10 @@
+seed,path,unprobed_gradient,probed_gradient,gradient_absolute_change,unprobed_loss,probed_loss,norm_absolute_change,warning
+0,OLD,-2.176966518163681e-08,-2.1143932826817036e-08,6.257323548197746e-10,6.027902603149414,6.027902603149414,0.0,Probe adds zero but changes compiled AD graph; inspect this change before applying explanation to original execution
+0,JAX_REF,3.198510967195034e-08,3.198510967195034e-08,0.0,6.027902603149414,6.027902603149414,0.0,Probe adds zero but changes compiled AD graph; inspect this change before applying explanation to original execution
+0,NEW,2.773595042526722e-08,2.773595042526722e-08,0.0,6.027902603149414,6.027902603149414,0.0,Probe adds zero but changes compiled AD graph; inspect this change before applying explanation to original execution
+1,OLD,0.0024481797590851784,0.0024481809232383966,1.1641532182693481e-09,6.040877342224121,6.040877342224121,0.0,Probe adds zero but changes compiled AD graph; inspect this change before applying explanation to original execution
+1,JAX_REF,0.002448117593303323,0.002448117593303323,0.0,6.040876865386963,6.040876865386963,0.0,Probe adds zero but changes compiled AD graph; inspect this change before applying explanation to original execution
+1,NEW,0.002448117360472679,0.002448117360472679,0.0,6.040876388549805,6.040876388549805,0.0,Probe adds zero but changes compiled AD graph; inspect this change before applying explanation to original execution
+2,OLD,0.0019296680111438036,0.001929668360389769,3.4924596548080444e-10,6.037284851074219,6.037284851074219,0.0,Probe adds zero but changes compiled AD graph; inspect this change before applying explanation to original execution
+2,JAX_REF,0.0019296752288937569,0.0019296752288937569,0.0,6.037284851074219,6.037284851074219,0.0,Probe adds zero but changes compiled AD graph; inspect this change before applying explanation to original execution
+2,NEW,0.0019296720856800675,0.0019296720856800675,0.0,6.037285327911377,6.037285327911377,0.0,Probe adds zero but changes compiled AD graph; inspect this change before applying explanation to original execution

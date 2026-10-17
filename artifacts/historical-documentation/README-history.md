@@ -1,0 +1,1 @@
+Historical documentation copied before the 17 October 2026 evidence update. Performance headlines here are superseded; preserve these source records verbatim. Use the repository root README and benchmarks/README.md for current claims.

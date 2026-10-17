@@ -1,0 +1,31 @@
+[
+  {
+    "file": "Atomic-gdn2-all-paths-speed-results-20261017T121040Z.zip",
+    "sha256": "beec2c72c072e1a11efc82217585e04a409fd1a62a698dd83291b8b7362678cb",
+    "manifest_files": 103,
+    "all_manifest_hashes_match": true,
+    "completed_cases": 28,
+    "timed_samples": 1008,
+    "all_latency_and_ratio_statistics_recomputed": true,
+    "numerical_diagnostic_comparisons": 168,
+    "parameter_delta_failures": 11,
+    "large_snapshot_arrays_in_archive": false,
+    "large_snapshot_note": "Only compact diagnostics and snapshot hashes retained; full NPZ snapshots were excluded by notebook collection.",
+    "concurrent_rounding_experiment_VM_isolation": {
+      "source": "Explicit user reply in this chat",
+      "separate_VMs_confirmed": true
+    }
+  },
+  {
+    "file": "Atomic-gdn2-rounding-hypothesis-results-20261017T124518Z.zip",
+    "sha256": "4126f92f320c7d846b1b42ed24700deacb659b3b3138dd50ba091f68399f0ab4",
+    "manifest_files": 17,
+    "all_manifest_hashes_match": true,
+    "completed_cases": 6,
+    "remote_publication_export": {
+      "exit_code": 1
+    },
+    "backend": "cpu",
+    "oracle_controls_pass": true
+  }
+]

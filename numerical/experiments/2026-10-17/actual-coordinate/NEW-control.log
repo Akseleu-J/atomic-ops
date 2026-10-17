@@ -1,0 +1,9 @@
+/content/atomic-actual-coordinate-20261017T140923Z/venv/lib/python3.13/site-packages/jax/_src/cloud_tpu_init.py:90: UserWarning: Transparent hugepages are not enabled. TPU runtime startup and shutdown time should be significantly improved on TPU v5e and newer. If not already set, you may need to enable transparent hugepages in your VM image (sudo sh -c "echo always > /sys/kernel/mm/transparent_hugepage/enabled")
+  warnings.warn(
+START NEW control 0
+COMPILE NEW control
+COMPLETE NEW control 0 2.773595042526722e-08
+START NEW control 1
+COMPLETE NEW control 1 0.002448117360472679
+START NEW control 2
+COMPLETE NEW control 2 0.0019296720856800675

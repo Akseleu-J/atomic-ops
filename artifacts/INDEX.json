@@ -1,0 +1,90 @@
+{
+  "current_headline_source": "Current four-path speed archive only; other benchmarks are history/supporting diagnostics",
+  "archives": [
+    {
+      "file": "artifacts/current-evidence/Atomic-gdn2-actual-coordinate-results-20261017T140923Z.zip",
+      "sha256": "dd6854993c17d8f8a7e3fffdd3804d4c1481636c84768bb62ec2641090b615b6",
+      "role": "Real full-LM coordinate capture with exact rational analysis",
+      "category": "current-evidence"
+    },
+    {
+      "file": "artifacts/current-evidence/Atomic-gdn2-all-paths-speed-results-20261017T121040Z.zip",
+      "sha256": "beec2c72c072e1a11efc82217585e04a409fd1a62a698dd83291b8b7362678cb",
+      "role": "Current four-path fixed-state speed experiment",
+      "category": "current-evidence"
+    },
+    {
+      "file": "artifacts/supporting-diagnostics/Atomic-gdn2-E2E-root-cause-results-20261017T110247Z.zip",
+      "sha256": "e3b05976c5f43ec09d59b940fbc6f5a1e603f1b8ae978c425f0f1e9121854d65",
+      "role": "Earlier diagnostic archive; preserve original failure/partial statuses",
+      "category": "supporting-diagnostics"
+    },
+    {
+      "file": "artifacts/supporting-diagnostics/Atomic-gdn2-OLD-E2E-remat-results-20261017T102827Z.zip",
+      "sha256": "24b76cdbd0bcc7998b059721ce57539ccc712a9253382acced0e657b50a4f1a9",
+      "role": "Earlier diagnostic archive; preserve original failure/partial statuses",
+      "category": "supporting-diagnostics"
+    },
+    {
+      "file": "artifacts/current-evidence/Atomic-gdn2-rounding-hypothesis-results-20261017T124518Z.zip",
+      "sha256": "4126f92f320c7d846b1b42ed24700deacb659b3b3138dd50ba091f68399f0ab4",
+      "role": "Controlled Decimal/FP64 experiment; publication export failed remotely, recovered locally",
+      "category": "current-evidence"
+    },
+    {
+      "file": "artifacts/supporting-diagnostics/Atomic-gdn2-vs-OLD-results-20261017T091230Z.zip",
+      "sha256": "e482e259c410c1a927ee804e25486ed9459b56d986ca13007e34e854eaa19c42",
+      "role": "Earlier diagnostic archive; preserve original failure/partial statuses",
+      "category": "supporting-diagnostics"
+    },
+    {
+      "file": "artifacts/historical-not-for-current-claims/atomic-matched-damping-results.zip",
+      "sha256": "d7acbba1b2279e98362f3b0059c2f2dec72dd9218f9a3b57976016cdcc9a0693",
+      "role": "Historical record; not a source for current headline speedups",
+      "category": "historical-not-for-current-claims"
+    },
+    {
+      "file": "artifacts/historical-not-for-current-claims/atomic-ops-corrected-original-results (1).zip",
+      "sha256": "28fb51c90de305e34ab44b7f4e453f25babc0980f3c9467b76f939d77a8373dd",
+      "role": "Historical record; not a source for current headline speedups",
+      "category": "historical-not-for-current-claims"
+    },
+    {
+      "file": "artifacts/supporting-diagnostics/Atomic-ops-final-results-20261017T083305Z.zip",
+      "sha256": "97de320f2d026dd0bb325f6347c92376ee848dfbd842985f423d069def4d7797",
+      "role": "Earlier diagnostic archive; preserve original failure/partial statuses",
+      "category": "supporting-diagnostics"
+    },
+    {
+      "file": "artifacts/historical-not-for-current-claims/atomic-ops-honest-benchmarks-20261016-partial (1).zip",
+      "sha256": "d37284df2867687f863f11156798a4d071dae8fccf4f9f80627e1293d6d3ce52",
+      "role": "Historical record; not a source for current headline speedups",
+      "category": "historical-not-for-current-claims"
+    },
+    {
+      "file": "artifacts/historical-not-for-current-claims/atomic-ops-honest-benchmarks-20261016-partial (2).zip",
+      "sha256": "6080d9c1107d6525b517114eb9377700ab2d904853a6ce3e195fe12fb3959194",
+      "role": "Historical record; not a source for current headline speedups",
+      "category": "historical-not-for-current-claims"
+    },
+    {
+      "file": "artifacts/historical-not-for-current-claims/atomic-ops-honest-benchmarks-20261016-partial.zip",
+      "sha256": "893ecc20d7db551ddba6c0f883cccc90b3668c186f95e83a9e24bd5708af9af1",
+      "role": "Historical record; not a source for current headline speedups",
+      "category": "historical-not-for-current-claims"
+    },
+    {
+      "file": "artifacts/current-evidence/Atomic-gdn2-exact-TPU-confirmation-results-20261017T150441Z.zip",
+      "sha256": "f1f25818567cbffe840395f2425c16cfd1a9007fd149caf9cc325c19865077ce",
+      "role": "Completed fresh TPU exact-bin confirmation of frozen real-LM captures; all checks pass",
+      "category": "current-evidence"
+    }
+  ],
+  "excluded": [],
+  "duplicate_aliases": [
+    {
+      "filename": "atomic-ops-corrected-original-results.zip",
+      "identical_to": "atomic-ops-corrected-original-results (1).zip"
+    }
+  ]
+}
