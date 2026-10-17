@@ -1,3 +1,9 @@
+> **Suite scope:** the layered description below concerns the earlier `atomic_ops`
+> implementation. The current `atomic_gdn2` generation has a separate `tests_gdn2/`
+> suite. Historical test execution is not a fresh pass of either suite.
+> Current measured evidence: [benchmarks](../benchmarks/README.md) and
+> [numerical audit](../numerical/README.md).
+
 # Testing Strategy for GDN‑2 Pallas Kernels
 
 Why the test suite is structured the way it is, and how to interpret failures.
@@ -37,11 +43,12 @@ That is why the test suite is built in **layers**, each catching a different cla
 - Repeats Layer 2 across several seeds.
 - Motivation: we have seen cases where a specific (batch, head, chunk) combination with periodic patterns produced `cond(Akk) ~ 1.45e8` – a single “lucky” seed would never catch that.
 
-### Layer 4 – Finite‑difference gradient check – **the strongest test**
+### Layer 4 – Finite‑difference gradient check
 - Compares analytical gradients from `custom_vjp` against numerical gradients computed as `(f(x+eps) - f(x-eps)) / (2*eps)`.
 - This check **shares no derivation** with either chunked‑WY or token‑serial implementations – finite differences are derived independently from all other code.
-- If there is a bug in the gradient formula (not in its Pallas implementation), only this test will catch it.
-- Expensive: each probed coordinate requires an extra forward+backward pass. Therefore we probe a small random subset of coordinates per tensor (see `n_probe` in the test config) rather than the whole array.
+- This supplies a different local gradient check. It does not establish that the forward
+  recurrence itself matches the intended model; step size and roundoff also affect the result.
+- Expensive: each probed coordinate requires two perturbed forward evaluations, in addition to the analytical-gradient evaluation. Therefore we probe a small random subset of coordinates per tensor (see `n_probe` in the test config) rather than the whole array.
 
 ### Layer 5 – Isolated backward‑stage checks (B3, B4, B5)
 The first test suite (`test_gdn2_full_math_correctness.py`) isolated only B1/B2. This extended suite adds:
@@ -70,8 +77,9 @@ Catches bugs that only appear with a different blocking grid (e.g., earlier we d
 
 ## 3. What these tests do NOT cover (by design)
 
-- **Performance / speed** – that is the job of `benchmarks/run_speed_benchmark.py` (which compares OLD, JAX_REF, and PALLAS, with correctness gates before timing).
-- **Memory (HBM) usage** – peak memory is measured in a separate, process‑isolated benchmark (`benchmarks/run_memory_benchmark.py`) that uses forking to get an honest peak without interference from previous runs. Memory numbers are published separately and are not part of the correctness suite.
+- **Performance / speed** – use the frozen four-path notebook linked from
+  [benchmarks/README.md](../benchmarks/README.md). Older benchmark scripts have distinct protocols.
+- **Memory (HBM) usage** – peak memory is measured in a separate, process‑isolated benchmark (`benchmarks/run_memory_benchmark.py`) with fresh spawned workers. Its process high-water mark includes initialization/warm-up. Memory numbers are separate from correctness tests; adjacent benchmark repairs do not constitute a new HBM measurement.
 - **Full pipeline on CPU** – `wy_solve_pallas`, `recompute_wy_pallas`, `dav_backward_pallas`, and `wy_dqkg_backward_pallas` call `pl.pallas_call` without `interpret=True`, so they expect TPU‑specific lowering. Only `build_chunk_scores_pallas` (Kernel A) and `intra_backward_pallas` (B4) support `interpret=True` and can run on CPU. That determines what goes into the CPU smoke test.
 
 ---
@@ -79,12 +87,12 @@ Catches bugs that only appear with a different blocking grid (e.g., earlier we d
 ## 4. How to run
 
 ```bash
-# Fast CPU smoke test (seconds, no TPU required):
+# Fast CPU smoke test (no TPU required):
 python tests/extended/test_gdn2_deep_correctness_mini.py
-```
 
 # Full suite (requires a TPU, with interpret=False):
 python tests/extended/test_gdn2_deep_correctness.py
+```
 
 ---
 

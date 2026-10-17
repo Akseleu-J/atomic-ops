@@ -193,6 +193,10 @@ def test_kernel_a_scores_cpu_interpret(cfg):
     Aqk_p, Akk_p = build_chunk_scores_pallas(q, k, b, g, scale=1.0, config=config, interpret=True)
     Aqk_m, Akk_m = _manual_scores(q, k, b, g, scale=1.0)
 
+    # Match the kernel's chunk axis; broadcasting would cross-compare heads/batches.
+    Aqk_m, Akk_m = Aqk_m[:, :, None, :, :], Akk_m[:, :, None, :, :]
+    assert Aqk_p.shape == Aqk_m.shape and Akk_p.shape == Akk_m.shape
+
     _check("kernel_a.Aqk_cpu_interpret", _rel_err(Aqk_p, Aqk_m), 1e-3)
     _check("kernel_a.Akk_cpu_interpret", _rel_err(Akk_p, Akk_m), 1e-3)
 

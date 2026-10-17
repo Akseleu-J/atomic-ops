@@ -58,6 +58,7 @@ def _huge_inputs(key, scale=30.0, bval=50.0, zero_decay=True):
 
 
 # ---------------- Kernel A ----------------
+@pytest.mark.skipif(jax.default_backend() != "tpu", reason="Tests TPU lowering, not CPU interpretation")
 def test_kernel_a_aqk_akk_clip():
     q, k, v, w, b, g = _huge_inputs(jax.random.PRNGKey(1))
     _, akk_t = build_chunk_scores_pallas(q, k, b, g, scale=1.0, config=CFG_TIGHT)
@@ -68,6 +69,7 @@ def test_kernel_a_aqk_akk_clip():
 
 
 # ---------------- Kernel B (WY solve) ----------------
+@pytest.mark.skipif(jax.default_backend() != "tpu", reason="Tests TPU lowering, not CPU interpretation")
 def test_kernel_b_wy_solve_clip():
     # Feed an already-huge Akk directly (bypassing Kernel A) to stress
     # _block_solve / _kernel_b_body's internal sanitize calls specifically.
@@ -84,6 +86,7 @@ def test_kernel_b_wy_solve_clip():
 
 
 # ---------------- Kernel C ----------------
+@pytest.mark.skipif(jax.default_backend() != "tpu", reason="Tests TPU lowering, not CPU interpretation")
 def test_kernel_c_recompute_wy_clip():
     key = jax.random.PRNGKey(3)
     q, k, v, w, b, g = _huge_inputs(key, scale=3000.0, bval=50.0)
@@ -155,6 +158,7 @@ def test_b1_dhu_backward_clip():
 
 
 # ---------------- B2 ----------------
+@pytest.mark.skipif(jax.default_backend() != "tpu", reason="Tests TPU lowering, not CPU interpretation")
 def test_b2_dav_backward_clip():
     key = jax.random.PRNGKey(8)
     n_chunks = 1
@@ -172,6 +176,7 @@ def test_b2_dav_backward_clip():
 
 
 # ---------------- B3 ----------------
+@pytest.mark.skipif(jax.default_backend() != "tpu", reason="Tests TPU lowering, not CPU interpretation")
 def test_b3_wy_dqkg_backward_clip():
     key = jax.random.PRNGKey(9)
     n_chunks = 1
@@ -196,6 +201,7 @@ def test_b3_wy_dqkg_backward_clip():
 
 
 # ---------------- B4 ----------------
+@pytest.mark.skipif(jax.default_backend() != "tpu", reason="Tests TPU lowering, not CPU interpretation")
 def test_b4_intra_backward_clip():
     key = jax.random.PRNGKey(10)
     ks = jax.random.split(key, 6)
@@ -236,5 +242,7 @@ def test_config_replace_roundtrip(clip_val):
     assert cfg.clip == clip_val
     assert cfg.bt == KAGGLE_LARGE.bt and cfg.bc == KAGGLE_LARGE.bc  # unrelated fields untouched
     q, k, v, w, b, g = _huge_inputs(jax.random.PRNGKey(42))
-    _, akk = build_chunk_scores_pallas(q, k, b, g, scale=1.0, config=cfg)
+    _, akk = build_chunk_scores_pallas(
+        q, k, b, g, scale=1.0, config=cfg, interpret=jax.default_backend() != "tpu"
+    )
     assert float(jnp.max(jnp.abs(akk))) <= clip_val + TOL

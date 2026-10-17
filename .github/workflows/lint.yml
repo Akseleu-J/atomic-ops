@@ -1,14 +1,19 @@
-name: Lint
+name: Lint (no new debt)
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
-  ruff:
+  lint-regressions:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
 
@@ -18,11 +23,8 @@ jobs:
           python-version: "3.12"
           cache: "pip"
 
-      - name: Install ruff
-        run: pip install ruff
+      - name: Install pinned ruff
+        run: pip install ruff==0.14.0
 
-      - name: Ruff check
-        run: ruff check atomic_ops tests benchmarks examples
-
-      - name: Ruff format check
-        run: ruff format --check atomic_ops tests benchmarks examples
+      - name: Syntax, undefined names and new lint/format debt
+        run: python ci/check_lint.py

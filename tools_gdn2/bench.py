@@ -1,4 +1,6 @@
-"""T8: speed/memory regression. Gate: total <= 11.02 ms * 1.05 at bt=128,bs2=32 (bsz=8,H=6,L=4096,D=128)."""
+# DEVELOPMENT TOOL: separate from the frozen 17 October four-path publication protocol.
+# See docs/BENCHMARK_TOOL_STATUS.md and benchmarks/notebooks/all-paths-speed.ipynb.
+"""Real-TPU timing smoke. Historical 11.02 ms is informational, not a cross-device gate."""
 import sys, os, time, math
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import jax, jax.numpy as jnp, numpy as np
@@ -23,6 +25,9 @@ def run(L=4096, bsz=8, H=6, D=128, **kw):
     return tot
 
 if __name__ == "__main__":
+    if jax.default_backend() != 'tpu':
+        raise SystemExit('Real TPU required: CPU Pallas interpretation is not a speed benchmark')
+    print('Measured device:',jax.devices(),'; JAX:',jax.__version__)
     t = run(bs2=32)
-    print("PASS" if t <= 11.02 * 1.05 else "FAIL: regression")
+    print(f'Measured {t:.3f} ms. Historical reference: 11.02 ms on its recorded environment; no cross-device PASS/FAIL.')
     run(L=8192, bs2=32)      # segmentation: must not OOM

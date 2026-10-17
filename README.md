@@ -89,7 +89,8 @@ g = -0.05 * jnp.ones(shape, jnp.float32)
 o, h_final = fn(q, k, v, w, b, g)
 ```
 
-The older `atomic_ops` API uses `(batch, sequence, heads, head_dimension)` instead. See [examples](examples) and [configuration](atomic_gdn2/config.py); the package APIs and layouts should not be interchanged.
+The older `atomic_ops` API uses `(batch, sequence, heads, head_dimension)` instead. The examples contain both package generations; use the API/layout stated by each file.
+See [examples](examples) and [configuration](atomic_gdn2/config.py); the package APIs and layouts should not be interchanged.
 
 ## Earlier validation and provenance
 

@@ -1,3 +1,5 @@
+# DEVELOPMENT TOOL: separate from the frozen 17 October four-path publication protocol.
+# See docs/BENCHMARK_TOOL_STATUS.md and benchmarks/notebooks/all-paths-speed.ipynb.
 from __future__ import annotations
 
 import gc
@@ -117,6 +119,9 @@ def _set_and_log_memory_env():
 def _compile_time_stats_from_jitted(jitted_fn, args):
     compiled = jitted_fn.lower(*args).compile()
     analysis = compiled.memory_analysis()
+    required = ('temp_size_in_bytes','argument_size_in_bytes','output_size_in_bytes','alias_size_in_bytes')
+    if analysis is None or any(getattr(analysis,k,None) is None for k in required):
+        raise RuntimeError('Compiler memory analysis unavailable; refusing to report zero bytes')
     temp = int(getattr(analysis, "temp_size_in_bytes", 0) or 0)
     argument = int(getattr(analysis, "argument_size_in_bytes", 0) or 0)
     output = int(getattr(analysis, "output_size_in_bytes", 0) or 0)
@@ -139,78 +144,15 @@ def _child_main(run_idx: int, result_queue: "mp.Queue"):
 
     KERNEL_CONFIGS = {"KAGGLE_SMALL": KAGGLE_SMALL, "KAGGLE_MEDIUM": KAGGLE_MEDIUM, "KAGGLE_LARGE": KAGGLE_LARGE}
 
-    def _gdn2_recurrence_impl(k, ea, z, alpha, q, chunk_size, num_chunks, b, n_heads, d_head, dtype):
-        def _combine(state1, state2):
-            m1, c1 = state1
-            m2, c2 = state2
-            m_new = m2 @ m1
-            fro_norm = jnp.sqrt(jnp.sum(jnp.square(m_new), axis=(-2, -1), keepdims=True))
-            scale = jnp.minimum(1.0, 1.0 / (fro_norm + 1e-6))
-            m_new = m_new * scale
-            c_new = m2 @ c1 + c2
-            c_new = jnp.nan_to_num(c_new, nan=0.0, posinf=1e4, neginf=-1e4)
-            return m_new, c_new
-
-        def _to_chunks(t):
-            t = t.reshape(b, num_chunks, chunk_size, n_heads, d_head)
-            return jnp.moveaxis(t, 1, 0)
-
-        k_ch, ea_ch, z_ch, alpha_ch, q_ch = map(_to_chunks, (k, ea, z, alpha, q))
-        eye_bh = jnp.broadcast_to(jnp.eye(d_head, dtype=dtype), (b, n_heads, d_head, d_head))
-        zero_bh = jnp.zeros((b, n_heads, d_head, d_head), dtype=dtype)
-
-        def _chunk_step(carry, chunk_inputs):
-            carry_M, carry_S = carry
-            k_c, ea_c, z_c, alpha_c, q_c = chunk_inputs
-            eye = jnp.eye(d_head, dtype=dtype)[None, None, None, :, :]
-            M_c = eye * alpha_c[:, :, :, None, :] - k_c[:, :, :, :, None] @ ea_c[:, :, :, None, :]
-            C_c = k_c[:, :, :, :, None] @ z_c[:, :, :, None, :]
-            P_local, S_local = jax.lax.associative_scan(_combine, (M_c, C_c), axis=1)
-            global_M = jnp.einsum("bchmn,bhnp->bchmp", P_local, carry_M)
-            global_S = jnp.einsum("bchmn,bhnp->bchmp", P_local, carry_S) + S_local
-            global_S = jnp.nan_to_num(global_S, nan=0.0, posinf=1e4, neginf=-1e4)
-            out_c = jnp.einsum("bchij,bchi->bchj", global_S, q_c)
-            new_carry = (global_M[:, -1], global_S[:, -1])
-            return new_carry, out_c
-
-        _chunk_step = jax.checkpoint(_chunk_step)
-        _, out_chunks = jax.lax.scan(_chunk_step, (eye_bh, zero_bh), (k_ch, ea_ch, z_ch, alpha_ch, q_ch))
-        return jnp.moveaxis(out_chunks, 0, 1).reshape(b, num_chunks * chunk_size, n_heads * d_head)
-
-    @partial(jax.custom_vjp, nondiff_argnums=(5, 6, 7, 8, 9, 10))
-    def gdn2_recurrence_safe(k, ea, z, alpha, q, chunk_size, num_chunks, b, n_heads, d_head, dtype):
-        return _gdn2_recurrence_impl(k, ea, z, alpha, q, chunk_size, num_chunks, b, n_heads, d_head, dtype)
-
-    def _gdn2_recurrence_safe_fwd(k, ea, z, alpha, q, chunk_size, num_chunks, b, n_heads, d_head, dtype):
-        primal_fn = jax.checkpoint(
-            lambda k_, ea_, z_, alpha_, q_: _gdn2_recurrence_impl(
-                k_, ea_, z_, alpha_, q_, chunk_size, num_chunks, b, n_heads, d_head, dtype
-            )
-        )
-        out, vjp_fn = jax.vjp(primal_fn, k, ea, z, alpha, q)
-        return out, vjp_fn
-
-    def _gdn2_recurrence_safe_bwd(chunk_size, num_chunks, b, n_heads, d_head, dtype, vjp_fn, g):
-        grads = vjp_fn(g)
-        _GRAD_CLIP = 1e3
-        return tuple(
-            jnp.nan_to_num(jnp.clip(gr, -_GRAD_CLIP, _GRAD_CLIP), nan=0.0, posinf=_GRAD_CLIP, neginf=-_GRAD_CLIP)
-            for gr in grads
-        )
-
-    gdn2_recurrence_safe.defvjp(_gdn2_recurrence_safe_fwd, _gdn2_recurrence_safe_bwd)
-
-    def old_associative_scan_forward(q, k, v, w, b, g, scale, h0, chunk_size, n_heads, d_head):
-        actual_bsz = q.shape[0]
-        alpha = jnp.exp(g.astype(jnp.float32))
-        ea = ((b * k) * alpha).astype(q.dtype)
-        z = (w * v).astype(q.dtype)
-        num_chunks = q.shape[1] // chunk_size
-        out = gdn2_recurrence_safe(
-            k, ea, z, alpha.astype(q.dtype), q, chunk_size, num_chunks, actual_bsz, n_heads, d_head, q.dtype
-        )
-        out = out.reshape(actual_bsz, out.shape[1], n_heads, d_head)
-        return out, jnp.zeros((actual_bsz, n_heads, d_head, d_head), dtype=q.dtype)
+    def old_associative_scan_forward(q,k,v,w,b,g,scale,h0,chunk_size,n_heads,d_head):
+        # Shared exact affine implementation; honors h0/scale and returns real h_final.
+        if chunk_size != 128:
+            raise ValueError('Corrected affine benchmark currently uses chunk_size=128')
+        import sys
+        from pathlib import Path
+        sys.path.insert(0,str(Path(__file__).resolve().parent))
+        from honest_gdn2 import associative
+        return associative(q,k,v,w,b,g,h0,scale)
 
     def make_inputs(key, B, L, H, D, dtype=jnp.float32):
         k1, k2, k3, k4, k5, k6, k7 = jax.random.split(key, 7)
@@ -386,15 +328,20 @@ def _child_gate_check(config_name: str, dtype_name: str, path_name: str, result_
             result.update(ok=True, note="JAX_REF is the reference itself -- no gate needed.")
             result_queue.put(result)
             return
-        if path_name == "OLD":
-            result.update(ok=True, note="OLD ignores h0 by design -- correctness vs JAX_REF not meaningful.")
-            result_queue.put(result)
-            return
 
         ref_fn = lambda q, k, v, w, b, g, h0: gdn2_chunked_wy_reference(
             q, k, v, g, b, w, scale, chunk_size=kcfg.bt, h0=h0, wy_eps=kcfg.wy_eps)
         cand_fn = lambda q, k, v, w, b, g, h0: gdn2_pallas_forward_trainable(
             q, k, v, w, b, g, scale, h0=h0, config=kcfg)
+
+        if path_name == "OLD":
+            import sys
+            from pathlib import Path
+            sys.path.insert(0,str(Path(__file__).resolve().parent))
+            from honest_gdn2 import associative
+            cand_fn = lambda q,k,v,w,b,g,h0: associative(q,k,v,w,b,g,h0,scale)
+            ref_fn = lambda q,k,v,w,b,g,h0: gdn2_chunked_wy_reference(
+                q,k,v,g,b,w,scale,chunk_size=kcfg.bt,h0=h0,wy_eps=0.0)
 
         def _loss(fn):
             def loss(q, k, v, w, b, g, h0):
@@ -405,7 +352,10 @@ def _child_gate_check(config_name: str, dtype_name: str, path_name: str, result_
         ref_o, ref_h = ref_fn(*inputs)
         cand_o, cand_h = cand_fn(*inputs)
         fwd_diff = float(jnp.max(jnp.abs(ref_o.astype(jnp.float32) - cand_o.astype(jnp.float32))))
-        fwd_ok = fwd_diff < tol["fwd_tol"] and bool(jnp.all(jnp.isfinite(cand_o)))
+        h_diff = float(jnp.max(jnp.abs(ref_h.astype(jnp.float32)-cand_h.astype(jnp.float32))))
+        finite = all(bool(jnp.all(jnp.isfinite(x))) for x in (ref_o,ref_h,cand_o,cand_h))
+        fwd_diff = max(fwd_diff,h_diff)
+        fwd_ok = finite and fwd_diff < tol["fwd_tol"]
 
         grads_ref = jax.grad(_loss(ref_fn), argnums=(0, 1, 2, 3, 4, 5, 6))(*inputs)
         grads_cand = jax.grad(_loss(cand_fn), argnums=(0, 1, 2, 3, 4, 5, 6))(*inputs)
@@ -419,7 +369,7 @@ def _child_gate_check(config_name: str, dtype_name: str, path_name: str, result_
             max_rel = max(max_rel, float(jnp.max(jnp.abs(gcd32 - gr32))) / denom)
         grad_ok = max_rel < tol["grad_rel_tol"]
 
-        result.update(ok=True, fwd_correctness_ok=fwd_ok, fwd_correctness_max_abs_diff=fwd_diff,
+        result.update(ok=bool(fwd_ok and grad_ok), fwd_correctness_ok=fwd_ok, fwd_correctness_max_abs_diff=fwd_diff,
                       grad_correctness_ok=grad_ok, grad_correctness_max_rel_err=max_rel)
     except Exception as e:
         result["error"] = f"{type(e).__name__}: {e}"
@@ -428,7 +378,7 @@ def _child_gate_check(config_name: str, dtype_name: str, path_name: str, result_
 
 
 def run_gate_check(config_name, dtype_name, path_name):
-    ctx = mp.get_context("fork")
+    ctx = mp.get_context("spawn")
     qres = ctx.Queue()
     p = ctx.Process(target=_child_gate_check, args=(config_name, dtype_name, path_name, qres))
     p.start()
@@ -445,7 +395,7 @@ def run_gate_check(config_name, dtype_name, path_name):
 
 
 def run_isolated(run_idx: int) -> dict:
-    ctx = mp.get_context("fork")
+    ctx = mp.get_context("spawn")
     q = ctx.Queue()
     p = ctx.Process(target=_child_main, args=(run_idx, q))
     p.start()
