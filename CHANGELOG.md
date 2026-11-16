@@ -22,6 +22,21 @@ the earlier figures were single-run measurements. Historical records remain unch
 See [current methods](benchmarks/README.md) and [scope](KNOWN_LIMITATIONS.md).
 
 
+## [0.3.0] - 2026-11-16
+
+### Added
+- `atomic_gdn2.inference` module (also exported from the package root):
+  - `decode_step`: single-token Pallas kernel for serving — per-row `reset=`,
+    bfloat16 state storage (float32 compute), optional `stability_tau`
+    Frobenius cap on the returned state. Verified bit-tight against
+    `reference.token_serial_ref` in interpret mode.
+  - `chunk_forward_inference`: forward-only prefill with bounded outputs
+    (no training residuals), `segment_ids` document resets at chunk
+    boundaries, bfloat16 state storage, optional stability cap.
+- Tests `tests/test_inference_v03.py`: decode-vs-serial, reset-vs-separate,
+  chunked-prefill-vs-serial, segment-ids-vs-separate, bf16-state drift,
+  stability-tau cap (all pass in interpret mode on CPU).
+
 ## [0.2.0] — 2026-09-27
 
 ### Added — `atomic_gdn2` package
