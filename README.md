@@ -139,3 +139,29 @@ KNOWN_LIMITATIONS.md        hardware, measurement and numerical boundaries
 The earlier `atomic_ops` publication has [Zenodo DOI 10.5281/zenodo.22706659](https://doi.org/10.5281/zenodo.22706659); that archival record is distinct from the current evidence update.
 
 Both packages use the [MIT License](LICENSE). `atomic_ops` preserves attribution to the NVlabs Gated DeltaNet-2 Triton reference. `atomic_gdn2` is Akseleu Omirbay's original TPU implementation of the published recurrence. See [contribution guidance](CONTRIBUTING.md) and [issues](https://github.com/Akseleu-J/atomic-ops/issues).
+
+### Inference (v0.3.0)
+
+```python
+import jax.numpy as jnp
+from atomic_gdn2 import decode_step, chunk_forward_inference
+
+# single-token serving step (state carried per sequence):
+#   q, k, v, w, b, g: (B, H, D); state: (B, H, D, D)
+o, state = decode_step(q, k, v, g, b, w, state, scale=1.0,
+                       reset=reset_rows,            # optional (B,) int/bool
+                       state_dtype=jnp.bfloat16,    # halves state bytes
+                       stability_tau=32.0)          # optional state-norm cap
+
+# forward-only prefill with bounded outputs (no training residuals):
+o, h_final = chunk_forward_inference(q, k, v, w, b, g, scale=1.0, cfg=cfg,
+                                     segment_ids=doc_ids,          # optional (B, L)
+                                     state_dtype=jnp.bfloat16)
+```
+
+Serving features: per-row reset (vLLM preemption / document boundaries),
+document resets at chunk boundaries via `segment_ids`, bfloat16 state
+storage (float32 compute), optional Frobenius-norm stability cap. Document
+boundaries are honored at chunk granularity — split chunks that span two
+documents at the caller level. All kernels run in Pallas interpret mode on
+CPU (`cfg=make_cfg(interpret=True)`) and compile on TPU otherwise.
