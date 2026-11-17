@@ -225,3 +225,58 @@ def test_stability_tau_caps_state():
                             stability_tau=tau, cfg=cfg)[1]
     nrm = np.sqrt((np.asarray(state, np.float64) ** 2).sum(axis=(-2, -1)))
     assert (nrm <= tau * (1.0 + 1e-5)).all(), f"state norm {nrm} exceeds tau {tau}"
+
+
+def test_decode_fuse_prologue_matches_preactivated():
+    """fuse_prologue=True (raw logits in-kernel) == pre-activated inputs."""
+    key = jax.random.PRNGKey(7)
+    B, H, D, scale = 2, 2, 16, 1.0
+    cfg = make_cfg(bt=16, bc=8, mb=8, score_bs=16, bs2=8, interpret=True)
+    q = jax.random.normal(key, (B, H, D)) * 2.0          # raw, unnormalized
+    k = jax.random.normal(key + 1, (B, H, D)) * 2.0
+    v = jax.random.normal(key + 2, (B, H, D))
+    w_logit = jax.random.normal(key + 3, (B, H, D)) * 2.0
+    b_logit = jax.random.normal(key + 4, (B, H, D)) * 2.0
+    g_raw = jax.random.normal(key + 5, (B, H, D)) * 2.0
+    state0 = jnp.zeros((B, H, D, D), jnp.float32)
+
+    # pre-activated path (layer does the domain construction)
+    g_act = -jnp.minimum(jax.nn.softplus(g_raw), cfg.g_max)
+    o_ref, s_ref = decode_step(q * jax.lax.rsqrt(jnp.sum(q * q, -1, keepdims=True) + 1e-6),
+                               k * jax.lax.rsqrt(jnp.sum(k * k, -1, keepdims=True) + 1e-6),
+                               v, g_act, jax.nn.sigmoid(b_logit),
+                               jax.nn.sigmoid(w_logit), state0, scale, cfg=cfg)
+    # fused path (kernel does the activations)
+    o_fus, s_fus = decode_step(q, k, v, g_raw, b_logit, w_logit, state0, scale,
+                               fuse_prologue=True, cfg=cfg)
+    np.testing.assert_allclose(np.asarray(o_fus), np.asarray(o_ref),
+                               rtol=1e-4, atol=1e-4)
+    np.testing.assert_allclose(np.asarray(s_fus), np.asarray(s_ref),
+                               rtol=1e-4, atol=1e-4)
+
+
+def test_cu_seqlens_matches_segment_ids():
+    """cu_seqlens conversion == explicit segment_ids (chunk-granularity)."""
+    key = jax.random.PRNGKey(8)
+    B, H, D, bt, nc, scale = 1, 2, 16, 16, 4, 1.0
+    L = bt * nc
+    cfg = make_cfg(bt=bt, bc=bt // 2, mb=8, score_bs=bt, bs2=bt // 4,
+                   interpret=True, g_max=160.0 / (bt // 4))
+    q = jax.random.normal(key, (B, L, H, D)) * 0.5
+    k = jax.random.normal(key + 1, (B, L, H, D)) * 0.5
+    v = jax.random.normal(key + 2, (B, L, H, D))
+    w = jax.nn.sigmoid(jax.random.normal(key + 3, (B, L, H, D)))
+    b = jax.nn.sigmoid(jax.random.normal(key + 4, (B, L, H, D)))
+    g = -jnp.exp(jax.random.normal(key + 5, (B, L, H, D)) * 0.39 - 1.0)
+    hm = lambda t: jnp.transpose(t, (0, 2, 1, 3))
+    split = 2 * bt
+    seg = (jnp.arange(L) >= split).astype(jnp.int32)[None]
+    cu = jnp.array([0, split, L], jnp.int32)
+    o_seg, hf_seg = chunk_forward_inference(hm(q), hm(k), hm(v), hm(w), hm(b),
+                                            hm(g), scale, cfg, segment_ids=seg)
+    o_cu, hf_cu = chunk_forward_inference(hm(q), hm(k), hm(v), hm(w), hm(b),
+                                          hm(g), scale, cfg, cu_seqlens=cu)
+    np.testing.assert_allclose(np.asarray(o_cu), np.asarray(o_seg),
+                               rtol=1e-4, atol=1e-4)
+    np.testing.assert_allclose(np.asarray(hf_cu), np.asarray(hf_seg),
+                               rtol=1e-4, atol=1e-4)

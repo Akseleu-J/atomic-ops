@@ -27,7 +27,8 @@ __all__ = ["decode_step", "chunk_forward_inference"]
 
 
 def _decode_body(state_ref, q_ref, k_ref, v_ref, w_ref, b_ref, g_ref, reset_ref,
-                 o_ref, new_ref, *, scale: float, stability_tau):
+                 o_ref, new_ref, *, scale: float, stability_tau,
+                 fuse_prologue: bool = False, g_max: float = 5.0):
     S = state_ref[0, 0].astype(jnp.float32)
     q = q_ref[0, 0].astype(jnp.float32)
     k = k_ref[0, 0].astype(jnp.float32)
@@ -35,6 +36,15 @@ def _decode_body(state_ref, q_ref, k_ref, v_ref, w_ref, b_ref, g_ref, reset_ref,
     w = w_ref[0, 0].astype(jnp.float32)
     b = b_ref[0, 0].astype(jnp.float32)
     g = g_ref[0, 0].astype(jnp.float32)
+    if fuse_prologue:
+        # activations fused into the kernel (deltanet-tpu's prologue method,
+        # adapted to our domain contract): raw q/k are l2-normalized, raw
+        # gate logits are squashed here, saving one HBM roundtrip per tensor.
+        q = q * jax.lax.rsqrt(jnp.sum(q * q, -1, keepdims=True) + 1e-6)
+        k = k * jax.lax.rsqrt(jnp.sum(k * k, -1, keepdims=True) + 1e-6)
+        b = jax.nn.sigmoid(b)
+        w = jax.nn.sigmoid(w)
+        g = -jnp.minimum(jax.nn.softplus(g), g_max)
     S = jnp.where(reset_ref[0] > 0, 0.0, S)
     h = S * jnp.exp(jnp.minimum(g, 0.0))[..., None]
     erase = jnp.sum((b * k)[..., None] * h, axis=0)
@@ -50,7 +60,7 @@ def _decode_body(state_ref, q_ref, k_ref, v_ref, w_ref, b_ref, g_ref, reset_ref,
 
 def decode_step(q, k, v, g, b, w, state, scale: float = 1.0, reset=None,
                 state_dtype=jnp.float32, stability_tau=None,
-                cfg: BLRConfig | None = None):
+                fuse_prologue: bool = False, cfg: BLRConfig | None = None):
     """Single-token recurrence for serving.
 
     q, k, v, w, b, g: (B, H, D); g is THIS token's log-decay (g <= 0 by the
@@ -58,6 +68,12 @@ def decode_step(q, k, v, g, b, w, state, scale: float = 1.0, reset=None,
     same semantics as token_serial_ref). state: (B, H, D, D) in state_dtype.
     reset: (B,) int/bool — zero the incoming state for those rows (vLLM
     preemption / document boundaries).
+
+    fuse_prologue: when True, q/k are RAW (l2-normalized in-kernel), b/w are
+    raw gate logits (sigmoid in-kernel) and g is the pre-softplus projection
+    (g = -min(softplus(g), g_max) in-kernel) — activations never materialize
+    in HBM (deltanet-tpu's prologue-fusion method adapted to our domain
+    contract). Requires cfg.
 
     Returns (o (B, H, D), new_state (B, H, D, D) in state_dtype). Compute is
     float32; storage dtype is state_dtype ("bfloat16" halves state bytes; the
@@ -74,8 +90,12 @@ def decode_step(q, k, v, g, b, w, state, scale: float = 1.0, reset=None,
     ss = pl.BlockSpec((1, 1, D, D), lambda i, h: (i, h, 0, 0))
     vs = pl.BlockSpec((1, 1, D), lambda i, h: (i, h, 0))
     rs = pl.BlockSpec((1,), lambda i, h: (i,))
+    if fuse_prologue and cfg is None:
+        raise ValueError("fuse_prologue=True requires cfg (needs g_max)")
     o, new = pl.pallas_call(
-        lambda *r: _decode_body(*r, scale=float(scale), stability_tau=stability_tau),
+        lambda *r: _decode_body(*r, scale=float(scale), stability_tau=stability_tau,
+                                fuse_prologue=fuse_prologue,
+                                g_max=(cfg.g_max if cfg is not None else 5.0)),
         grid=grid,
         in_specs=[ss, vs, vs, vs, vs, vs, vs, rs],
         out_specs=[vs, ss],
@@ -121,8 +141,8 @@ def _cd_inference_body(q_ref, k_ref, v_ref, w_ref, b_ref, gc_ref, a_ref, aqk_ref
 
 
 def chunk_forward_inference(q, k, v, w, b, g, scale: float, cfg: BLRConfig,
-                            h0=None, segment_ids=None, state_dtype=jnp.float32,
-                            stability_tau=None):
+                            h0=None, segment_ids=None, cu_seqlens=None,
+                            state_dtype=jnp.float32, stability_tau=None):
     """Forward-only prefill with bounded outputs: returns (o, h_final) only.
 
     Same math and layouts as pipeline.make_blr_trainable's forward (head-major
@@ -133,7 +153,9 @@ def chunk_forward_inference(q, k, v, w, b, g, scale: float, cfg: BLRConfig,
     segment_ids: optional (B, L) int tensor of document IDs. A document
     boundary resets the state; boundaries are honored at CHUNK granularity in
     this level (a chunk spanning two documents must be split by the caller —
-    the vLLM layer owns that scheduling). initial_state is assumed to belong
+    the vLLM layer owns that scheduling). cu_seqlens: optional 1-D token
+    offsets; converted to per-token segment ids internally (same chunk
+    granularity caveat). initial_state is assumed to belong
     to the first chunk's document.
     stability_tau: optional cap on the Frobenius norm of the returned state
     (inference-only; the training path is never capped).
@@ -145,6 +167,16 @@ def chunk_forward_inference(q, k, v, w, b, g, scale: float, cfg: BLRConfig,
     scale = float(scale)
     h = jnp.zeros((bsz, H, D, D), jnp.float32) if h0 is None else h0.astype(jnp.float32)
 
+    if cu_seqlens is not None:
+        # document boundaries at token granularity -> per-token segment ids
+        # (chunk-granularity resets as with segment_ids; a chunk spanning a
+        # boundary must still be split by the caller)
+        if segment_ids is not None:
+            raise ValueError("pass either segment_ids or cu_seqlens, not both")
+        cs = jnp.asarray(cu_seqlens).reshape(-1)
+        pos = jnp.arange(L)[None, :]
+        bounds = cs[None, 1:-1]  # interior boundaries only
+        segment_ids = (pos >= bounds[:, None]).sum(axis=0)[None, :].astype(jnp.int32)
     seg_chunk = None
     if segment_ids is not None:
         seg = jnp.asarray(segment_ids).reshape(bsz, L)

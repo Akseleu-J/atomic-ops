@@ -33,9 +33,15 @@ See [current methods](benchmarks/README.md) and [scope](KNOWN_LIMITATIONS.md).
   - `chunk_forward_inference`: forward-only prefill with bounded outputs
     (no training residuals), `segment_ids` document resets at chunk
     boundaries, bfloat16 state storage, optional stability cap.
-- Tests `tests/test_inference_v03.py`: decode-vs-serial, reset-vs-separate,
-  chunked-prefill-vs-serial, segment-ids-vs-separate, bf16-state drift,
-  stability-tau cap (all pass in interpret mode on CPU).
+- `fuse_prologue=True` on `decode_step`: l2-normalization and gate activations
+  computed inside the kernel from raw projections (prologue-fusion method
+  adapted from the deltanet-tpu inference stack to our domain contract).
+- `cu_seqlens` on `chunk_forward_inference`: 1-D token offsets converted to
+  per-token segment ids internally (boundary token starts the new document).
+- Tests `tests/test_inference_v03.py` (8 gates, all pass in interpret mode on
+  CPU): decode-vs-serial, reset-vs-separate, chunked-prefill-vs-serial,
+  segment-ids-vs-separate, bf16-state drift, stability-tau cap,
+  fuse-prologue-vs-pre-activated, cu-seqlens-vs-segment-ids.
 
 ## [0.2.0] — 2026-09-27
 
