@@ -46,10 +46,10 @@ def bench_atomic(B, L, Hk, Hv, K, V):
     q, k, v, w, b = mk(), mk(), mk(), mk(), mk()
     g = -jax.random.uniform(key, (B, Hk, L, K), minval=0.0, maxval=1.0)
     call = make_blr_trainable(cfg, 1.0)
-    def loss():
-        o, hf = call(q, k, v, w, b, g)
+    def loss(q_, k_, v_, w_, b_, g_):
+        o, hf = call(q_, k_, v_, w_, b_, g_)
         return jnp.sum(o) + jnp.sum(hf)
-    return _time(lambda: jax.value_and_grad(loss)())
+    return _time(lambda: jax.value_and_grad(loss)(q, k, v, w, b, g))
 
 
 def bench_deltanet_tpu(B, L, Hk, Hv, K, V):
@@ -60,10 +60,10 @@ def bench_deltanet_tpu(B, L, Hk, Hv, K, V):
     v, w = mk(B, L, Hv, V), jax.nn.sigmoid(mk(B, L, Hv, V))
     b = jax.nn.sigmoid(mk(B, L, Hk, K))
     g = -jax.random.uniform(key, (B, L, Hk, K), minval=0.0, maxval=1.0)
-    def loss():
-        o, _ = chunk_gdn2(q, k, v, g, b, w, chunk_size=BT, output_final_state=True)
+    def loss(q_, k_, v_, g_, b_, w_):
+        o, _ = chunk_gdn2(q_, k_, v_, g_, b_, w_, chunk_size=BT, output_final_state=True)
         return jnp.sum(o)
-    return _time(lambda: jax.value_and_grad(loss)())
+    return _time(lambda: jax.value_and_grad(loss)(q, k, v, g, b, w))
 
 
 def main():
