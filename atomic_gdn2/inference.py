@@ -26,16 +26,16 @@ from .config import BLRConfig
 __all__ = ["decode_step", "chunk_forward_inference"]
 
 
-def _decode_body(state_ref, q_ref, k_ref, v_ref, w_ref, b_ref, g_ref, reset_ref,
+def _decode_body(state_ref, q_ref, k_ref, v_ref, w_ref, b_ref, g_ref,
                  o_ref, new_ref, *, scale: float, stability_tau,
                  fuse_prologue: bool = False, g_max: float = 5.0):
-    S = state_ref[0, 0].astype(jnp.float32)
-    q = q_ref[0, 0].astype(jnp.float32)
-    k = k_ref[0, 0].astype(jnp.float32)
-    v = v_ref[0, 0].astype(jnp.float32)
-    w = w_ref[0, 0].astype(jnp.float32)
-    b = b_ref[0, 0].astype(jnp.float32)
-    g = g_ref[0, 0].astype(jnp.float32)
+    S = state_ref[0].astype(jnp.float32)
+    q = q_ref[0].astype(jnp.float32)
+    k = k_ref[0].astype(jnp.float32)
+    v = v_ref[0].astype(jnp.float32)
+    w = w_ref[0].astype(jnp.float32)
+    b = b_ref[0].astype(jnp.float32)
+    g = g_ref[0].astype(jnp.float32)
     if fuse_prologue:
         # activations fused into the kernel (deltanet-tpu's prologue method,
         # adapted to our domain contract): raw q/k are l2-normalized, raw
@@ -45,17 +45,16 @@ def _decode_body(state_ref, q_ref, k_ref, v_ref, w_ref, b_ref, g_ref, reset_ref,
         b = jax.nn.sigmoid(b)
         w = jax.nn.sigmoid(w)
         g = -jnp.minimum(jax.nn.softplus(g), g_max)
-    S = jnp.where(reset_ref[0] > 0, 0.0, S)
     h = S * jnp.exp(jnp.minimum(g, 0.0))[..., None]
-    erase = jnp.sum((b * k)[..., None] * h, axis=0)
+    erase = jnp.sum((b * k)[..., None] * h, axis=1)
     v_new = w * v - erase
-    h = h + k[..., None] * v_new[None, :]
-    o = jnp.sum(h * (q * scale)[:, None], axis=0)
+    h = h + k[..., None] * v_new[..., None, :]
+    o = jnp.sum(h * (q * scale)[..., None], axis=1)
     if stability_tau is not None:
         nrm = jnp.sqrt(jnp.sum(h * h))
         h = h * jnp.minimum(1.0, stability_tau / jnp.maximum(nrm, 1e-12))
-    o_ref[0, 0] = o.astype(o_ref.dtype)
-    new_ref[0, 0] = h.astype(new_ref.dtype)
+    o_ref[0] = o.astype(o_ref.dtype)
+    new_ref[0] = h.astype(new_ref.dtype)
 
 
 def decode_step(q, k, v, g, b, w, state, scale: float = 1.0, reset=None,
@@ -84,26 +83,31 @@ def decode_step(q, k, v, g, b, w, state, scale: float = 1.0, reset=None,
     if state.shape != (bsz, H, D, D):
         raise ValueError(f"state must be (B,H,D,D), got {state.shape}")
     st = state.astype(state_dtype)
-    rst = (jnp.zeros((bsz,), jnp.int32) if reset is None
-           else jnp.asarray(reset).astype(jnp.int32).reshape(bsz))
-    grid = (bsz, H)
-    ss = pl.BlockSpec((1, 1, D, D), lambda i, h: (i, h, 0, 0))
-    vs = pl.BlockSpec((1, 1, D), lambda i, h: (i, h, 0))
-    rs = pl.BlockSpec((1,), lambda i, h: (i,))
+    if reset is not None:
+        # per-row reset happens OUTSIDE the kernel: a (B,) scalar block would
+        # violate the TPU Mosaic block-shape rule (the last two dims of a block
+        # must divide (8, 128) or equal the array's dims).
+        rst = jnp.asarray(reset).reshape(bsz).astype(jnp.int32)
+        st = jnp.where(rst[:, None, None, None] > 0, jnp.zeros_like(st), st)
     if fuse_prologue and cfg is None:
         raise ValueError("fuse_prologue=True requires cfg (needs g_max)")
+    # grid (B,); blocks span the FULL (H, .) extent of their last two axes, so
+    # they are legal on TPU Mosaic for any H, D (block dims == array dims).
+    grid = (bsz,)
+    ss = pl.BlockSpec((1, H, D, D), lambda i: (i, 0, 0, 0))
+    vs = pl.BlockSpec((1, H, D), lambda i: (i, 0, 0))
     o, new = pl.pallas_call(
         lambda *r: _decode_body(*r, scale=float(scale), stability_tau=stability_tau,
                                 fuse_prologue=fuse_prologue,
                                 g_max=(cfg.g_max if cfg is not None else 5.0)),
         grid=grid,
-        in_specs=[ss, vs, vs, vs, vs, vs, vs, rs],
+        in_specs=[ss, vs, vs, vs, vs, vs, vs],
         out_specs=[vs, ss],
         out_shape=[jax.ShapeDtypeStruct((bsz, H, D), q.dtype),
                    jax.ShapeDtypeStruct((bsz, H, D, D), state_dtype)],
         compiler_params=cparams(cfg.vmem_mb if cfg is not None else 150.0),
         interpret=(cfg.interpret if cfg is not None else jax.default_backend() != "tpu"),
-    )(st, q, k, v, w, b, g, rst)
+    )(st, q, k, v, w, b, g)
     return o, new
 
 
@@ -206,8 +210,8 @@ def chunk_forward_inference(q, k, v, w, b, g, scale: float, cfg: BLRConfig,
         io = pl.BlockSpec((1, 1, n, cfg.bt, D), lambda i, hh: (i, hh, 0, 0, 0))
         sc = pl.BlockSpec((1, 1, n, cfg.bt, cfg.bt), lambda i, hh: (i, hh, 0, 0, 0))
         hs = pl.BlockSpec((1, 1, D, D), lambda i, hh: (i, hh, 0, 0))
-        sg = (pl.BlockSpec((1, n), lambda i, hh: (i, 0)) if seg_cur is not None
-              else pl.BlockSpec((1, n), lambda i, hh: (0, 0)))
+        # full-array block: legal on TPU Mosaic for any (B, n) shape
+        sg = pl.BlockSpec((bsz, n), lambda i, hh: (0, 0))
         o_ch, hf = pl.pallas_call(
             lambda *r: _cd_inference_body(*r, nc=n, scale=scale, cfg=cfg,
                                           seg_mode=seg_cur is not None),
