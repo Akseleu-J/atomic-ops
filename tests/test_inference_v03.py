@@ -280,3 +280,88 @@ def test_cu_seqlens_matches_segment_ids():
                                rtol=1e-4, atol=1e-4)
     np.testing.assert_allclose(np.asarray(hf_cu), np.asarray(hf_seg),
                                rtol=1e-4, atol=1e-4)
+
+
+def test_multi_segment_prefill_matches_serial():
+    """L > max_chunks_per_call: two gates.
+
+    Gate 1 (the segmentation property, exact): multi-segment output is
+    bit-identical to a single-call run of the same chunked pipeline — the
+    state carry across pallas launches is lossless.
+    Gate 2 (documented contract): both agree with the undamped serial
+    reference within the chunked pipeline's fp32 contract (wy_eps damping
+    changes the solved system by O(eps); sanitize clipping) — the tolerance
+    scales with sequence length because the contract difference accumulates.
+    """
+    key = jax.random.PRNGKey(9)
+    B, H, D, bt = 1, 2, 16, 16
+    nc = 5  # 5 chunks with max_chunks_per_call=2 -> 3 segments
+    L = bt * nc
+    base = dict(bt=bt, bc=bt // 2, mb=8, score_bs=bt, bs2=bt // 4,
+                interpret=True, g_max=160.0 / (bt // 4))
+    cfg_multi = make_cfg(**base, max_chunks_per_call=2)
+    cfg_one = make_cfg(**base, max_chunks_per_call=32)
+    scale = 1.0
+    q = jax.random.normal(key, (B, L, H, D)) * 0.5
+    k = jax.random.normal(key + 1, (B, L, H, D)) * 0.5
+    v = jax.random.normal(key + 2, (B, L, H, D))
+    w = jax.nn.sigmoid(jax.random.normal(key + 3, (B, L, H, D)))
+    b = jax.nn.sigmoid(jax.random.normal(key + 4, (B, L, H, D)))
+    g = -jnp.exp(jax.random.normal(key + 5, (B, L, H, D)) * 0.39 - 1.0)
+    o_ref, hf_ref = token_serial_ref(q, k, v, g, b, w, scale)
+    hm = lambda t: jnp.transpose(t, (0, 2, 1, 3))
+    o_multi, hf_multi = chunk_forward_inference(hm(q), hm(k), hm(v), hm(w),
+                                                hm(b), hm(g), scale, cfg_multi)
+    o_one, hf_one = chunk_forward_inference(hm(q), hm(k), hm(v), hm(w),
+                                            hm(b), hm(g), scale, cfg_one)
+    # Gate 1: segmentation carry is lossless (bit-identical)
+    assert np.array_equal(np.asarray(o_multi), np.asarray(o_one))
+    assert np.array_equal(np.asarray(hf_multi), np.asarray(hf_one))
+    # Gate 2: serial-equivalence within the documented chunked contract
+    np.testing.assert_allclose(np.asarray(hm(o_multi)), np.asarray(o_ref),
+                               rtol=1e-2, atol=6e-3)
+    np.testing.assert_allclose(np.asarray(hf_multi), np.asarray(hf_ref),
+                               rtol=1e-2, atol=3e-3)
+
+
+def test_decode_long_three_documents_with_resets():
+    """Long decode, three documents packed -> reset at each boundary."""
+    key = jax.random.PRNGKey(10)
+    B, H, D, scale = 2, 2, 16, 1.0
+    lens = (23, 41, 36)
+    L = sum(lens)
+    cfg = make_cfg(bt=16, bc=8, mb=8, score_bs=16, bs2=8, interpret=True)
+    q = jax.random.normal(key, (B, L, H, D)) * 0.5
+    k = jax.random.normal(key + 1, (B, L, H, D)) * 0.5
+    v = jax.random.normal(key + 2, (B, L, H, D))
+    w = jax.nn.sigmoid(jax.random.normal(key + 3, (B, L, H, D)))
+    b = jax.nn.sigmoid(jax.random.normal(key + 4, (B, L, H, D)))
+    g = -jnp.exp(jax.random.normal(key + 5, (B, L, H, D)) * 0.39 - 1.0)
+    # reference: each document serially from zero state
+    o_parts, offs = [], 0
+    for n in lens:
+        o_p, _ = token_serial_ref(q[:, offs:offs + n], k[:, offs:offs + n],
+                                  v[:, offs:offs + n], g[:, offs:offs + n],
+                                  b[:, offs:offs + n], w[:, offs:offs + n], scale)
+        o_parts.append(o_p)
+        offs += n
+    o_ref = jnp.concatenate(o_parts, axis=1)
+
+    qm = jnp.transpose(q, (0, 2, 1, 3))
+    km = jnp.transpose(k, (0, 2, 1, 3))
+    vm = jnp.transpose(v, (0, 2, 1, 3))
+    wm = jnp.transpose(w, (0, 2, 1, 3))
+    bm = jnp.transpose(b, (0, 2, 1, 3))
+    gm = jnp.transpose(g, (0, 2, 1, 3))
+    state = jnp.zeros((B, H, D, D), jnp.float32)
+    outs = []
+    for t in range(L):
+        reset = (jnp.ones((B,), jnp.int32)
+                 if t in (lens[0], lens[0] + lens[1]) else None)
+        o, state = decode_step(qm[:, :, t], km[:, :, t], vm[:, :, t],
+                               gm[:, :, t], bm[:, :, t], wm[:, :, t],
+                               state, scale, reset=reset, cfg=cfg)
+        outs.append(o)
+    o_dec = jnp.stack(outs, axis=1)
+    np.testing.assert_allclose(np.asarray(o_dec), np.asarray(o_ref),
+                               rtol=1e-4, atol=1e-4)
