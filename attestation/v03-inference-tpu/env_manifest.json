@@ -1,0 +1,8 @@
+{
+  "atomic_ops_head": "904d5f9",
+  "jax": "0.11.2",
+  "torch": "2.14.1+cpu",
+  "jax_devices": [
+    "TPU_0(process=0,(0,0,0,0))"
+  ]
+}

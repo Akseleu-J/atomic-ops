@@ -1,0 +1,30 @@
+{
+  "all_semantics_ok": true,
+  "gates": {
+    "A1_decode_vs_serial": true,
+    "A2_reset_vs_separate": true,
+    "A3_prefill_vs_serial": true,
+    "A4_segment_ids": true,
+    "A5_bf16_state_rel_drift": 0.001490179798565805,
+    "A5_bf16_state": true,
+    "A6_stability_tau": true,
+    "B1_compiled_decode_vs_serial": true,
+    "B2_compiled_prefill_vs_serial": true,
+    "C_backward_smoke_max_grad": 3.282891035079956,
+    "C_backward_smoke": true
+  },
+  "bench": {},
+  "perf": {
+    "prefill_tok_per_s": 1649.2,
+    "decode_tok_per_s": 29.2,
+    "decode_step_ms": 136.97
+  },
+  "env": {
+    "atomic_ops_head": "904d5f9",
+    "jax": "0.11.2",
+    "torch": "2.14.1+cpu",
+    "jax_devices": [
+      "TPU_0(process=0,(0,0,0,0))"
+    ]
+  }
+}

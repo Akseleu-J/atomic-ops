@@ -1,0 +1,8 @@
+{
+  "B1_compiled_decode_vs_serial": {
+    "ok": true
+  },
+  "B2_compiled_prefill_vs_serial": {
+    "ok": true
+  }
+}

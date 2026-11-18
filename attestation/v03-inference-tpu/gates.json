@@ -1,0 +1,31 @@
+{
+  "A1_decode_vs_serial": {
+    "ok": true
+  },
+  "A2_reset_vs_separate": {
+    "ok": true
+  },
+  "A3_prefill_vs_serial": {
+    "ok": true
+  },
+  "A4_segment_ids": {
+    "ok": true
+  },
+  "A5_bf16_state_rel_drift": 0.001490179798565805,
+  "A5_bf16_state": {
+    "ok": true
+  },
+  "A6_stability_tau": {
+    "ok": true
+  },
+  "B1_compiled_decode_vs_serial": {
+    "ok": true
+  },
+  "B2_compiled_prefill_vs_serial": {
+    "ok": true
+  },
+  "C_backward_smoke_max_grad": 3.282891035079956,
+  "C_backward_smoke": {
+    "ok": true
+  }
+}
