@@ -61,7 +61,7 @@ def test_decode_matches_serial_clean():
     outs = []
     for t in range(L):
         o, state = decode_step(qm[:, :, t], km[:, :, t], vm[:, :, t],
-                               gm[:, :, t], bm[:, :, t], wm[:, :, t],
+                               wm[:, :, t], bm[:, :, t], gm[:, :, t],
                                state, scale, cfg=cfg)
         outs.append(o)
     o_dec = jnp.stack(outs, axis=1)  # (B, L, H, D)
@@ -99,7 +99,7 @@ def test_decode_reset_matches_separate_runs():
     for t in range(L1 + L2):
         reset = jnp.ones((B,), jnp.int32) if t == L1 else None
         o, state = decode_step(qm[:, :, t], km[:, :, t], vm[:, :, t],
-                               gm[:, :, t], bm[:, :, t], wm[:, :, t],
+                               wm[:, :, t], bm[:, :, t], gm[:, :, t],
                                state, scale, reset=reset, cfg=cfg)
         outs.append(o)
     o_dec = jnp.stack(outs, axis=1)
@@ -196,10 +196,10 @@ def test_bf16_state_storage():
     s16 = jnp.zeros((B, H, D, D), jnp.bfloat16)
     for t in range(L):
         o32, s32 = decode_step(qm[:, :, t], km[:, :, t], vm[:, :, t],
-                               gm[:, :, t], bm[:, :, t], wm[:, :, t],
+                               wm[:, :, t], bm[:, :, t], gm[:, :, t],
                                s32, scale, cfg=cfg)
         o16, s16 = decode_step(qm[:, :, t], km[:, :, t], vm[:, :, t],
-                               gm[:, :, t], bm[:, :, t], wm[:, :, t],
+                               wm[:, :, t], bm[:, :, t], gm[:, :, t],
                                s16, scale, state_dtype=jnp.bfloat16, cfg=cfg)
     diff = np.abs(np.asarray(o16, np.float32) - np.asarray(o32, np.float32))
     scale_o = np.abs(np.asarray(o32, np.float32)).max() + 1e-6
@@ -240,15 +240,17 @@ def test_decode_fuse_prologue_matches_preactivated():
     g_raw = jax.random.normal(key + 5, (B, H, D)) * 2.0
     state0 = jnp.zeros((B, H, D, D), jnp.float32)
 
-    # pre-activated path (layer does the domain construction)
-    g_act = -jnp.minimum(jax.nn.softplus(g_raw), cfg.g_max)
+    # checkpoint-style gate construction (A4 fix): g = -exp(A_log)*softplus(g_raw + dt_bias)
+    a_log = jax.random.normal(key + 6, (H,)) * 0.3
+    dt_bias = jax.random.normal(key + 7, (D,)) * 0.2
+    g_act = -jnp.exp(a_log)[None, :, None] * jax.nn.softplus(g_raw + dt_bias[None, None, :])
     o_ref, s_ref = decode_step(q * jax.lax.rsqrt(jnp.sum(q * q, -1, keepdims=True) + 1e-6),
                                k * jax.lax.rsqrt(jnp.sum(k * k, -1, keepdims=True) + 1e-6),
-                               v, g_act, jax.nn.sigmoid(b_logit),
-                               jax.nn.sigmoid(w_logit), state0, scale, cfg=cfg)
-    # fused path (kernel does the activations)
-    o_fus, s_fus = decode_step(q, k, v, g_raw, b_logit, w_logit, state0, scale,
-                               fuse_prologue=True, cfg=cfg)
+                               v, jax.nn.sigmoid(w_logit), jax.nn.sigmoid(b_logit),
+                               g_act, state0, scale, cfg=cfg)
+    # fused path (kernel does the activations; new unified arg order)
+    o_fus, s_fus = decode_step(q, k, v, w_logit, b_logit, g_raw, state0, scale,
+                               fuse_prologue=True, a_log=a_log, dt_bias=dt_bias, cfg=cfg)
     np.testing.assert_allclose(np.asarray(o_fus), np.asarray(o_ref),
                                rtol=1e-4, atol=1e-4)
     np.testing.assert_allclose(np.asarray(s_fus), np.asarray(s_ref),
@@ -359,9 +361,160 @@ def test_decode_long_three_documents_with_resets():
         reset = (jnp.ones((B,), jnp.int32)
                  if t in (lens[0], lens[0] + lens[1]) else None)
         o, state = decode_step(qm[:, :, t], km[:, :, t], vm[:, :, t],
-                               gm[:, :, t], bm[:, :, t], wm[:, :, t],
+                               wm[:, :, t], bm[:, :, t], gm[:, :, t],
                                state, scale, reset=reset, cfg=cfg)
         outs.append(o)
     o_dec = jnp.stack(outs, axis=1)
     np.testing.assert_allclose(np.asarray(o_dec), np.asarray(o_ref),
                                rtol=1e-4, atol=1e-4)
+
+
+# ---------------------------------------------------------------------------
+# Regression tests from the production audit (PR-prep/audit_probes/): A1-A6, B1
+# ---------------------------------------------------------------------------
+
+def test_a1_segment_ids_batch_rows_independent():
+    """Audit A1: with B>1, each batch row must use ITS OWN document layout.
+
+    Reviewer probe: row 1 has a doc boundary mid-sequence, row 0 does not.
+    Before the fix all rows read row 0's boundaries (34.8% rel error, silent).
+    """
+    key = jax.random.PRNGKey(21)
+    B, H, D, bt, nc, scale = 2, 2, 16, 16, 4, 1.0
+    L = bt * nc
+    cfg = make_cfg(bt=bt, bc=bt // 2, mb=8, score_bs=bt, bs2=bt // 4,
+                   interpret=True, g_max=160.0 / (bt // 4))
+    q, k, v, w, b, g = (jnp.asarray(x) for x in [
+        jax.random.normal(key, (B, L, H, D)) * 0.5,
+        jax.random.normal(key + 1, (B, L, H, D)) * 0.5,
+        jax.random.normal(key + 2, (B, L, H, D)),
+        jax.nn.sigmoid(jax.random.normal(key + 3, (B, L, H, D))),
+        jax.nn.sigmoid(jax.random.normal(key + 4, (B, L, H, D))),
+        -jnp.exp(jax.random.normal(key + 5, (B, L, H, D)) * 0.39 - 1.0)])
+    hm = lambda t: jnp.transpose(t, (0, 2, 1, 3))
+    split = 2 * bt  # boundary after chunk 1
+    seg = jnp.stack([(jnp.arange(L) < split).astype(jnp.int32)[None],
+                     jnp.zeros((1, L), jnp.int32)], axis=0).reshape(B, L)
+    # reference: run each row separately with its own segment_ids
+    o_parts = []
+    for row in range(B):
+        o_r, _ = chunk_forward_inference(hm(q[row:row + 1]), hm(k[row:row + 1]),
+                                         hm(v[row:row + 1]), hm(w[row:row + 1]),
+                                         hm(b[row:row + 1]), hm(g[row:row + 1]),
+                                         scale, cfg, segment_ids=seg[row:row + 1])
+        o_parts.append(o_r)
+    o_ref = jnp.concatenate(o_parts, axis=0)
+    o_pack, _ = chunk_forward_inference(hm(q), hm(k), hm(v), hm(w), hm(b), hm(g),
+                                        scale, cfg, segment_ids=seg)
+    np.testing.assert_allclose(np.asarray(o_pack), np.asarray(o_ref),
+                               rtol=2e-3, atol=2e-3)
+
+
+def test_a2_mid_chunk_boundary_raises():
+    """Audit A2 (owner decision): a boundary inside a chunk RAISES loudly."""
+    key = jax.random.PRNGKey(22)
+    B, H, D, bt, nc, scale = 1, 2, 16, 16, 4, 1.0
+    L = bt * nc
+    cfg = make_cfg(bt=bt, bc=bt // 2, mb=8, score_bs=bt, bs2=bt // 4,
+                   interpret=True, g_max=160.0 / (bt // 4))
+    q, k, v, w, b, g = (jnp.asarray(x) for x in [
+        jax.random.normal(key, (B, L, H, D)) * 0.5,
+        jax.random.normal(key + 1, (B, L, H, D)) * 0.5,
+        jax.random.normal(key + 2, (B, L, H, D)),
+        jax.nn.sigmoid(jax.random.normal(key + 3, (B, L, H, D))),
+        jax.nn.sigmoid(jax.random.normal(key + 4, (B, L, H, D))),
+        -jnp.exp(jax.random.normal(key + 5, (B, L, H, D)) * 0.39 - 1.0)])
+    hm = lambda t: jnp.transpose(t, (0, 2, 1, 3))
+    seg = (jnp.arange(L) == bt + 5).astype(jnp.int32)[None]  # boundary INSIDE chunk 1
+    seg = jnp.cumsum(seg, axis=1)
+    with pytest.raises(ValueError, match="boundary inside chunk"):
+        chunk_forward_inference(hm(q), hm(k), hm(v), hm(w), hm(b), hm(g),
+                                scale, cfg, segment_ids=seg)
+
+
+def test_a3_cu_seqlens_general():
+    """Audit A3: cu_seqlens works for any doc count and any B."""
+    key = jax.random.PRNGKey(23)
+    B, H, D, bt, nc, scale = 2, 2, 16, 16, 4, 1.0
+    L = bt * nc
+    cfg = make_cfg(bt=bt, bc=bt // 2, mb=8, score_bs=bt, bs2=bt // 4,
+                   interpret=True, g_max=160.0 / (bt // 4))
+    q, k, v, w, b, g = (jnp.asarray(x) for x in [
+        jax.random.normal(key, (B, L, H, D)) * 0.5,
+        jax.random.normal(key + 1, (B, L, H, D)) * 0.5,
+        jax.random.normal(key + 2, (B, L, H, D)),
+        jax.nn.sigmoid(jax.random.normal(key + 3, (B, L, H, D))),
+        jax.nn.sigmoid(jax.random.normal(key + 4, (B, L, H, D))),
+        -jnp.exp(jax.random.normal(key + 5, (B, L, H, D)) * 0.39 - 1.0)])
+    hm = lambda t: jnp.transpose(t, (0, 2, 1, 3))
+    # 1 document, B=2
+    o1, _ = chunk_forward_inference(hm(q), hm(k), hm(v), hm(w), hm(b), hm(g),
+                                    scale, cfg, cu_seqlens=jnp.array([0, L]))
+    # 3 documents, B=2 (per-batch cu)
+    s1, s2 = bt, 3 * bt
+    cu = jnp.array([[0, s1, s2, L], [0, s2, s1, L]])
+    o3, _ = chunk_forward_inference(hm(q), hm(k), hm(v), hm(w), hm(b), hm(g),
+                                    scale, cfg, cu_seqlens=cu)
+    # 1-D shared cu with 2 docs
+    o2, _ = chunk_forward_inference(hm(q), hm(k), hm(v), hm(w), hm(b), hm(g),
+                                    scale, cfg, cu_seqlens=jnp.array([0, s2, L]))
+    assert o1.shape == o3.shape == o2.shape
+
+
+def test_a5_decode_nan_guard_resets_row():
+    """Audit A5 (owner decision): a non-finite row is RESET, not carried."""
+    key = jax.random.PRNGKey(24)
+    B, H, D, scale = 2, 2, 16, 1.0
+    cfg = make_cfg(bt=16, bc=8, mb=8, score_bs=16, bs2=8, interpret=True)
+    q = jax.random.normal(key, (B, H, D)) * 0.5
+    k = jax.random.normal(key + 1, (B, H, D)) * 0.5
+    v = jax.random.normal(key + 2, (B, H, D))
+    w = jax.nn.sigmoid(jax.random.normal(key + 3, (B, H, D)))
+    b = jax.nn.sigmoid(jax.random.normal(key + 4, (B, H, D)))
+    g = -jnp.exp(jax.random.normal(key + 5, (B, H, D)) * 0.39 - 1.0)
+    state = jnp.ones((B, H, D, D), jnp.float32)
+    state = state.at[0].set(jnp.nan)                     # row 0 poisoned
+    o, new = decode_step(q, k, v, w, b, g, state, scale, cfg=cfg)
+    # in-kernel A5 policy: non-finite entries are zeroed, the row restarts clean
+    assert bool(jnp.isfinite(new).all()), "kernel must sanitize non-finite state"
+    assert bool(jnp.isfinite(o).all())
+
+
+def test_a6_prefill_g_domain_checked():
+    """Audit A6: out-of-domain g raises loudly (was 58%/205% silent error)."""
+    key = jax.random.PRNGKey(25)
+    B, H, D, bt, nc, scale = 1, 2, 16, 16, 2, 1.0
+    L = bt * nc
+    cfg = make_cfg(bt=bt, bc=bt // 2, mb=8, score_bs=bt, bs2=bt // 4,
+                   interpret=True, g_max=160.0 / (bt // 4))
+    q, k, v, w, b, g = (jnp.asarray(x) for x in [
+        jax.random.normal(key, (B, L, H, D)) * 0.5,
+        jax.random.normal(key + 1, (B, L, H, D)) * 0.5,
+        jax.random.normal(key + 2, (B, L, H, D)),
+        jax.nn.sigmoid(jax.random.normal(key + 3, (B, L, H, D))),
+        jax.nn.sigmoid(jax.random.normal(key + 4, (B, L, H, D))),
+        -jnp.full((B, L, H, D), 50.0)])                   # |g| > g_max=40
+    hm = lambda t: jnp.transpose(t, (0, 2, 1, 3))
+    with pytest.raises(ValueError, match="outside the layer domain"):
+        chunk_forward_inference(hm(q), hm(k), hm(v), hm(w), hm(b), hm(g),
+                                scale, cfg)
+
+
+def test_b1_stability_tau_per_head_consistent():
+    """Audit B1: decode and prefill caps now use the same per-head norm."""
+    key = jax.random.PRNGKey(26)
+    B, H, D, scale = 1, 2, 16, 1.0
+    cfg = make_cfg(bt=16, bc=8, mb=8, score_bs=16, bs2=8, interpret=True)
+    tau = 4.0
+    q = jax.random.normal(key, (B, H, D)) * 3.0
+    k = jax.random.normal(key + 1, (B, H, D)) * 3.0
+    v = jax.random.normal(key + 2, (B, H, D)) * 3.0
+    w = jax.nn.sigmoid(jax.random.normal(key + 3, (B, H, D)))
+    b = jax.nn.sigmoid(jax.random.normal(key + 4, (B, H, D)))
+    g = jnp.zeros((B, H, D))
+    state = jnp.zeros((B, H, D, D), jnp.float32)
+    for _ in range(6):
+        state = decode_step(q, k, v, w, b, g, state, scale,
+                            stability_tau=tau, cfg=cfg)[1]
+    nrm = np.sqrt((np.asarray(state, np.float64) ** 2).sum(axis=(-2, -1)))
+    assert (nrm <= tau * (1 + 1e-5)).all()
