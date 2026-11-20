@@ -51,7 +51,7 @@ jobs:
 
       - name: Run remaining unit tests
         run: |
-          pytest tests/test_configs.py tests/test_reference.py tests/test_imports.py tests/test_clip_config_plumbing.py tests/test_pallas.py -v --tb=short
+          pytest tests/test_configs.py tests/test_reference.py tests/test_imports.py tests/test_clip_config_plumbing.py tests/test_pallas.py tests/test_inference_v03.py -v --tb=short
         env:
           JAX_PLATFORMS: cpu
 

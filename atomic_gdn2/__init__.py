@@ -8,4 +8,4 @@ from .inference import decode_step, chunk_forward_inference
 try:
     __version__ = _version("atomic-ops")
 except _PkgNotFound:
-    __version__ = "0.2.0"
+    __version__ = "0.3.1"

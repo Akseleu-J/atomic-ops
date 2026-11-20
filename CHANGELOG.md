@@ -22,6 +22,44 @@ the earlier figures were single-run measurements. Historical records remain unch
 See [current methods](benchmarks/README.md) and [scope](KNOWN_LIMITATIONS.md).
 
 
+## [0.3.1] - 2026-11-20
+
+### Fixed (production audit — PR-prep/V0.3.0_PRODUCTION_AUDIT_AND_PLAN.md)
+- **A1**: `segment_ids` with B>1 read only row 0's boundaries (34.8% silent
+  cross-document state mixing) -> per-row TPU-legal padded blocks
+  `(B, 8, PAD_N=128)`.
+- **A2**: a document boundary inside a chunk was silently ignored (20.9%)
+  -> now raises `ValueError` with the offending chunk/row (chunk-granularity
+  resets only; callers split at boundaries).
+- **A3**: `cu_seqlens` crashed for 1 and 3+ documents and for B>1 -> general
+  conversion (1-D shared and per-batch `(B, n_docs+1)` forms; a boundary
+  token starts its document).
+- **A4**: `fuse_prologue` could not consume the checkpoint gate construction
+  -> now takes `a_log (H,)` / `dt_bias (D,)` and computes
+  `g = -exp(A_log) * softplus(g_raw + dt_bias)` in-kernel (NVlabs contract).
+- **A5**: NaN/Inf persisted forever in a decode row -> in-kernel cleanup
+  policy: non-finite state/output entries are zeroed (row restarts clean).
+- **A6**: prefill never validated the `g` domain (58-205% silent error for
+  out-of-domain inputs) -> clamped identically to decode (`g <= 0`) and
+  raises outside the layer domain `[-g_max, 0]`.
+- **B1**: `stability_tau` per-head in decode (matches prefill).
+- **B3**: unified decode argument order `(q, k, v, w, b, g)`.
+- **B2**: prefill accepts bfloat16 inputs (cast at the API boundary).
+- **B5**: inference tests included in CI.
+
+### Changed (training semantics — audit Stage 2.1)
+- **`layer.py`: the write gate `w` is now squashed with a sigmoid**, matching
+  the GDN-2 definition (arXiv:2605.22791) and the NVlabs reference
+  (`w_proj(...).sigmoid()`). **Pre-0.3.1 checkpoints were trained with a
+  linear (unbounded) write gate** — they remain internally consistent but
+  deviate from the published GDN-2 semantics; re-evaluate or retrain before
+  mixing with checkpoint-construction inference paths. Discovered during the
+  production audit.
+
+### Tests
+- 16 gates total (audit probes A1-A6 and B1 became regression tests; the
+  reviewer's P1-P10 probe scenarios all reproduce and are covered).
+
 ## [0.3.0] - 2026-11-16
 
 ### Added

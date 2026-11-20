@@ -36,6 +36,10 @@ def layer_fwd(x, p, blr_fn, n_heads, d_head, cfg, l2norm_k=True, stats=False):
     if l2norm_k:
         k = k * jax.lax.rsqrt(jnp.sum(k * k, -1, keepdims=True) + 1e-6)
         q = q * jax.lax.rsqrt(jnp.sum(q * q, -1, keepdims=True) + 1e-6)
+    w = jax.nn.sigmoid(w)   # GDN-2 write gate: both gates squashed to (0, 1)
+                            # (audit Stage 2.1: matches NVlabs gdn2.py:320 and
+                            # the arXiv:2605.22791 definition; pre-0.3.1 the
+                            # write gate was linear — see CHANGELOG)
     b = jax.nn.sigmoid(hm(proj("b")))
     g = -jnp.minimum(jax.nn.softplus(hm(proj("g"))), cfg.g_max)
     o, _ = blr_fn(q, k, v, w, b, g)
