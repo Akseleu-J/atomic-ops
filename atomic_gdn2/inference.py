@@ -25,7 +25,39 @@ from .precision import exp_nonpos, sanitize
 from .layout import cparams
 from .config import BLRConfig
 
-__all__ = ["decode_step", "chunk_forward_inference"]
+__all__ = ["decode_step", "chunk_forward_inference", "LayerInputs"]
+
+import dataclasses as _dc
+
+
+@_dc.dataclass(frozen=True)
+class LayerInputs:
+    """Named input container (audit Stage 3.1, fixes B3 arg-order confusion).
+
+    All tensors are head-ready: q/k (B, H, Dk); v/w (B, Hv, Dv); g (B, H, Dk)
+    per-token log-decay (<= 0); b (B, H, Dk). Both entry points accept this
+    container instead of six positional tensors, making argument order
+    impossible to get wrong.
+    """
+    q: jax.Array
+    k: jax.Array
+    v: jax.Array
+    w: jax.Array
+    b: jax.Array
+    g: jax.Array
+
+    def validate(self, Dk: int, Dv: int):
+        B = self.q.shape[0]
+        want = {"q": (B, self.q.shape[1], Dk), "k": (B, self.q.shape[1], Dk),
+                "v": (B, self.v.shape[1], Dv), "w": (B, self.v.shape[1], Dv),
+                "b": (B, self.q.shape[1], Dk), "g": (B, self.q.shape[1], Dk)}
+        for name, arr in (("q", self.q), ("k", self.k), ("v", self.v),
+                          ("w", self.w), ("b", self.b), ("g", self.g)):
+            if tuple(arr.shape) != want[name]:
+                raise ValueError(f"{name}: expected {want[name]}, got {tuple(arr.shape)}")
+
+    def as_tuple(self):
+        return (self.q, self.k, self.v, self.w, self.b, self.g)
 
 PAD_N = 128  # segment-block padding for TPU Mosaic block-shape legality
 
@@ -73,9 +105,10 @@ def _decode_body(state_ref, q_ref, k_ref, v_ref, w_ref, b_ref, g_ref,
     new_ref[0] = h.astype(new_ref.dtype)
 
 
-def decode_step(q, k, v, w, b, g, state, scale: float = 1.0, reset=None,
-                state_dtype=jnp.float32, stability_tau=None,
-                fuse_prologue: bool = False, a_log=None, dt_bias=None,
+def decode_step(q=None, k=None, v=None, w=None, b=None, g=None, state=None,
+                scale: float = 1.0, reset=None, state_dtype=jnp.float32,
+                stability_tau=None, fuse_prologue: bool = False, a_log=None,
+                dt_bias=None, inputs: "LayerInputs | None" = None,
                 cfg: BLRConfig | None = None):
     """Single-token recurrence for serving.
 
@@ -96,7 +129,18 @@ def decode_step(q, k, v, w, b, g, state, scale: float = 1.0, reset=None,
     loss is a single rounding of the returned state, validated for the
     channel-wise GDN-2 update).
     """
+    if inputs is not None:
+        q, k, v, w, b, g = inputs.as_tuple()
+    if q is None or state is None:
+        raise ValueError("pass either inputs=LayerInputs(...) or q,k,v,w,b,g,state")
     bsz, H, D = q.shape
+    if not isinstance(scale, (int, float)) or isinstance(scale, jax.Array):
+        raise ValueError(
+            "scale must be a concrete Python float (B4): traced values cannot "
+            "enter the Pallas kernel; pass it as a compile-time constant")
+    if stability_tau is not None and not isinstance(stability_tau, (int, float)):
+        raise ValueError(
+            "stability_tau must be a concrete Python float (B4)")
     if state.shape != (bsz, H, D, D):
         raise ValueError(f"state must be (B,H,D,D), got {state.shape}")
     st = state.astype(state_dtype)
@@ -180,9 +224,11 @@ def _cd_inference_body(q_ref, k_ref, v_ref, w_ref, b_ref, gc_ref, a_ref, aqk_ref
     hf_ref[0, 0] = h
 
 
-def chunk_forward_inference(q, k, v, w, b, g, scale: float, cfg: BLRConfig,
+def chunk_forward_inference(q=None, k=None, v=None, w=None, b=None, g=None,
+                            scale: float = 1.0, cfg: BLRConfig | None = None,
                             h0=None, segment_ids=None, cu_seqlens=None,
-                            state_dtype=jnp.float32, stability_tau=None):
+                            state_dtype=jnp.float32, stability_tau=None,
+                            inputs: "LayerInputs | None" = None):
     """Forward-only prefill with bounded outputs: returns (o, h_final) only.
 
     Same math and layouts as pipeline.make_blr_trainable's forward (head-major
@@ -200,13 +246,18 @@ def chunk_forward_inference(q, k, v, w, b, g, scale: float, cfg: BLRConfig,
     stability_tau: optional cap on the Frobenius norm of the returned state
     (inference-only; the training path is never capped).
     """
+    if inputs is not None:
+        q, k, v, w, b, g = inputs.as_tuple()
     bsz, H, L, D = q.shape
-    if L % cfg.bt:
-        raise ValueError(f"L={L} must be divisible by bt={cfg.bt}")
+    # B7 fix (0.4.0): arbitrary length — full chunks go through the chunkwise
+    # kernel, the tail (L % bt tokens) goes through sequential decode steps.
+    # The old strict `L % bt == 0` requirement is gone; the vLLM layer can
+    # still schedule chunk-aligned sequences for maximum throughput.
     # B2 fix: decode accepts bfloat16 inputs, prefill crashed on ref dtype
     # swap — normalize to float32 at the API boundary (compute is fp32 anyway)
     q, k, v, w, b = (jnp.asarray(t).astype(jnp.float32) for t in (q, k, v, w, b))
-    nc = L // cfg.bt
+    n_full = L // cfg.bt
+    r_tail = L - n_full * cfg.bt
     scale = float(scale)
     # A6 fix (audit): prefill never validated the g domain — g=-8 (beyond
     # g_max) gave 58% and g>0 gave 205% error silently. Clamp identically to
@@ -226,15 +277,19 @@ def chunk_forward_inference(q, k, v, w, b, g, scale: float, cfg: BLRConfig,
             "fix the projection before calling)")
     h = jnp.zeros((bsz, H, D, D), jnp.float32) if h0 is None else h0.astype(jnp.float32)
 
-    if segment_ids is not None:
-        seg_tok = jnp.asarray(segment_ids).reshape(bsz, L)
+    n_full = L // cfg.bt
+    L_full = n_full * cfg.bt
+    r_tail = L - L_full
+    if segment_ids is not None and n_full > 0:
+        seg_tok = jnp.asarray(segment_ids).reshape(bsz, L)[:, :L_full]
         # A2 fix (owner decision): a document boundary INSIDE a chunk used to
         # be silently ignored (20.9% error). Raise loudly instead — the
-        # caller must split chunks at document boundaries.
-        per_chunk_first = seg_tok[:, ::cfg.bt]                       # (B, nc)
-        same = (seg_tok.reshape(bsz, nc, cfg.bt)
-                == per_chunk_first[:, :, None])                      # (B, nc, bt)
-        bad = ~(same.all(axis=-1))                                   # (B, nc)
+        # caller must split chunks at document boundaries. The TAIL (after
+        # the full chunks) is exempt: decode steps handle per-token resets.
+        per_chunk_first = seg_tok[:, ::cfg.bt]                       # (B, n_full)
+        same = (seg_tok.reshape(bsz, n_full, cfg.bt)
+                == per_chunk_first[:, :, None])                      # (B, n_full, bt)
+        bad = ~(same.all(axis=-1))                                   # (B, n_full)
         try:
             bad_concrete = bool(np.asarray(bad.any()))
         except (TypeError, ValueError):
@@ -267,15 +322,15 @@ def chunk_forward_inference(q, k, v, w, b, g, scale: float, cfg: BLRConfig,
     seg_padded = None
     if segment_ids is not None:
         seg = jnp.asarray(segment_ids).reshape(bsz, L)
-        seg_chunk = seg[:, ::cfg.bt]  # (B, nc) document id at each chunk start
+        seg_chunk = seg[:, :L_full:cfg.bt][:, :n_full]  # (B, n_full) seg at chunk start
         # A1 fix: pad to (B, 8, PAD_N) so each program can read ITS row's
         # boundaries through a TPU-legal block (row 0 = this row, 1-7 pad)
         seg_padded = jnp.zeros((bsz, 8, PAD_N), dtype=seg_chunk.dtype)
-        seg_padded = seg_padded.at[:, 0, :nc].set(seg_chunk)
+        seg_padded = seg_padded.at[:, 0, :n_full].set(seg_chunk)
 
     outs = []
-    for s in range(0, nc, cfg.max_chunks_per_call):
-        e = min(nc, s + cfg.max_chunks_per_call)
+    for s in range(0, n_full, cfg.max_chunks_per_call):
+        e = min(n_full, s + cfg.max_chunks_per_call)
         n = e - s
         sl = lambda t: t[:, :, s * cfg.bt:e * cfg.bt].reshape(bsz, H, n, cfg.bt, D)
         q_c, k_c, v_c, w_c, b_c = sl(q), sl(k), sl(v), sl(w), sl(b)
@@ -320,7 +375,32 @@ def chunk_forward_inference(q, k, v, w, b, g, scale: float, cfg: BLRConfig,
         # materialize interpret-mode Refs to plain arrays (see decode_step)
         h = jnp.asarray(np.asarray(hf))
         outs.append(from_chunks_local(jnp.asarray(np.asarray(o_ch))))
-    o = outs[0] if len(outs) == 1 else jnp.concatenate(outs, axis=2)
+    o = (jnp.concatenate(outs, axis=2) if len(outs) > 1
+         else (outs[0] if outs else None))
+
+    # ---- B7: decode the tail (L % bt tokens) with per-token doc resets ----
+    if r_tail > 0:
+        tail_resets = None
+        if seg_chunk is not None:
+            seg_full = jnp.asarray(segment_ids).reshape(bsz, L)
+            if L_full > 0:
+                prev = jnp.concatenate([seg_full[:, L_full - 1:L_full],
+                                        seg_full[:, L_full:-1]], axis=1)[:, :r_tail]
+            else:
+                prev = jnp.zeros((bsz, r_tail), jnp.int32)
+            tail_resets = (seg_full[:, L_full:] != prev).astype(jnp.int32)  # (B, r)
+        outs_tail = []
+        for j in range(r_tail):
+            t_abs = L_full + j
+            rst = (tail_resets[:, j] if tail_resets is not None else None)
+            o_t, h = decode_step(q[:, :, t_abs], k[:, :, t_abs], v[:, :, t_abs],
+                                 w[:, :, t_abs], b[:, :, t_abs], g[:, :, t_abs],
+                                 h.astype(state_dtype), scale, reset=rst,
+                                 state_dtype=state_dtype, cfg=cfg)
+            outs_tail.append(o_t)
+        o_tail = jnp.stack(outs_tail, axis=2)                    # (B, H, r, D)
+        o = (o_tail if o is None else jnp.concatenate([o, o_tail], axis=2))
+
     if stability_tau is not None:
         nrm = jnp.sqrt(jnp.sum(h.astype(jnp.float32) ** 2, axis=(-2, -1), keepdims=True))
         h = h * jnp.minimum(1.0, stability_tau / jnp.maximum(nrm, 1e-12))

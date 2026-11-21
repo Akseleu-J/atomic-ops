@@ -22,6 +22,26 @@ the earlier figures were single-run measurements. Historical records remain unch
 See [current methods](benchmarks/README.md) and [scope](KNOWN_LIMITATIONS.md).
 
 
+## [0.4.0-alpha] - 2026-11-20 (audit Stage 3; preview)
+
+### Added
+- **Arbitrary length (B7)**: `chunk_forward_inference` no longer requires
+  `L % bt == 0` — full chunks run through the chunkwise kernel, the tail
+  (`L % bt` tokens) runs through sequential decode steps with per-token
+  document resets derived from `segment_ids` (a boundary inside the tail is
+  handled by the decode reset path; boundaries inside the full-chunk region
+  still raise per A2).
+- **`LayerInputs` container** (audit Stage 3.1, B3 final): named frozen
+  dataclass `LayerInputs(q, k, v, w, b, g)` with `validate(Dk, Dv)`; both
+  entry points accept `inputs=LayerInputs(...)` as an alternative to six
+  positional tensors — argument order can no longer be confused.
+- **B4 friendly errors**: non-Python-float `scale` / `stability_tau` raise a
+  clear `ValueError` ("concrete Python float") instead of a deep
+  ConcretizationTypeError.
+- Tests: arbitrary-length-vs-serial (with and without tail document resets),
+  LayerInputs equivalence, B4 static-param error, adversarial zero-k /
+  extreme-in-domain-g (21 gates total, all green).
+
 ## [0.3.1] - 2026-11-20
 
 ### Fixed (production audit — PR-prep/V0.3.0_PRODUCTION_AUDIT_AND_PLAN.md)

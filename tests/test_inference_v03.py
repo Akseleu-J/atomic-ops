@@ -518,3 +518,122 @@ def test_b1_stability_tau_per_head_consistent():
                             stability_tau=tau, cfg=cfg)[1]
     nrm = np.sqrt((np.asarray(state, np.float64) ** 2).sum(axis=(-2, -1)))
     assert (nrm <= tau * (1 + 1e-5)).all()
+
+
+# ---------------------------------------------------------------------------
+# Stage 3 (0.4.0): arbitrary length (B7), LayerInputs container (B3), B4 errors
+# ---------------------------------------------------------------------------
+
+def test_b7_arbitrary_length_matches_serial():
+    """L = 2*bt + 13: full chunks + decode tail == serial reference."""
+    key = jax.random.PRNGKey(30)
+    B, H, D, bt = 1, 2, 16, 16
+    L = bt * 2 + 13
+    cfg = make_cfg(bt=bt, bc=bt // 2, mb=8, score_bs=bt, bs2=bt // 4,
+                   interpret=True, g_max=160.0 / (bt // 4))
+    scale = 1.0
+    q = jax.random.normal(key, (B, L, H, D)) * 0.5
+    k = jax.random.normal(key + 1, (B, L, H, D)) * 0.5
+    v = jax.random.normal(key + 2, (B, L, H, D))
+    w = jax.nn.sigmoid(jax.random.normal(key + 3, (B, L, H, D)))
+    b = jax.nn.sigmoid(jax.random.normal(key + 4, (B, L, H, D)))
+    g = -jnp.exp(jax.random.normal(key + 5, (B, L, H, D)) * 0.39 - 1.0)
+    o_ref, hf_ref = token_serial_ref(q, k, v, g, b, w, scale)
+    hm = lambda t: jnp.transpose(t, (0, 2, 1, 3))
+    o, hf = chunk_forward_inference(hm(q), hm(k), hm(v), hm(w), hm(b), hm(g),
+                                    scale, cfg)
+    assert np.asarray(hm(o)).shape == (B, L, H, D), "full-length output"
+    np.testing.assert_allclose(np.asarray(hm(o)), np.asarray(o_ref),
+                               rtol=1e-2, atol=6e-3)
+    np.testing.assert_allclose(np.asarray(hf), np.asarray(hf_ref),
+                               rtol=1e-2, atol=3e-3)
+
+
+def test_b7_arbitrary_length_with_segment_ids():
+    """Arbitrary length + document resets in the tail (decode reset path)."""
+    key = jax.random.PRNGKey(31)
+    B, H, D, bt = 1, 2, 16, 16
+    L = bt * 2 + 10
+    cfg = make_cfg(bt=bt, bc=bt // 2, mb=8, score_bs=bt, bs2=bt // 4,
+                   interpret=True, g_max=160.0 / (bt // 4))
+    scale = 1.0
+    q, k, v, w, b, g = (jnp.asarray(x) for x in [
+        jax.random.normal(key, (B, L, H, D)) * 0.5,
+        jax.random.normal(key + 1, (B, L, H, D)) * 0.5,
+        jax.random.normal(key + 2, (B, L, H, D)),
+        jax.nn.sigmoid(jax.random.normal(key + 3, (B, L, H, D))),
+        jax.nn.sigmoid(jax.random.normal(key + 4, (B, L, H, D))),
+        -jnp.exp(jax.random.normal(key + 5, (B, L, H, D)) * 0.39 - 1.0)])
+    hm = lambda t: jnp.transpose(t, (0, 2, 1, 3))
+    split = bt * 2 + 5                   # boundary INSIDE the tail (L_full=32)
+    seg = (jnp.arange(L) >= split).astype(jnp.int32)[None]
+    o1, _ = chunk_forward_inference(hm(q[:, :split]), hm(k[:, :split]),
+                                    hm(v[:, :split]), hm(w[:, :split]),
+                                    hm(b[:, :split]), hm(g[:, :split]), scale, cfg)
+    o2, hf2 = chunk_forward_inference(hm(q[:, split:]), hm(k[:, split:]),
+                                      hm(v[:, split:]), hm(w[:, split:]),
+                                      hm(b[:, split:]), hm(g[:, split:]), scale, cfg)
+    o_pack, hf_pack = chunk_forward_inference(hm(q), hm(k), hm(v), hm(w), hm(b),
+                                              hm(g), scale, cfg, segment_ids=seg)
+    np.testing.assert_allclose(np.asarray(o_pack),
+                               np.asarray(jnp.concatenate([o1, o2], axis=2)),
+                               rtol=2e-3, atol=2e-3)
+    np.testing.assert_allclose(np.asarray(hf_pack), np.asarray(hf2),
+                               rtol=2e-3, atol=2e-3)
+
+
+def test_layer_inputs_container_equivalence():
+    """LayerInputs container == individual positional args (B3 final)."""
+    key = jax.random.PRNGKey(32)
+    B, H, D, scale = 1, 2, 16, 1.0
+    cfg = make_cfg(bt=16, bc=8, mb=8, score_bs=16, bs2=8, interpret=True)
+    q = jax.random.normal(key, (B, H, D)) * 0.5
+    k = jax.random.normal(key + 1, (B, H, D)) * 0.5
+    v = jax.random.normal(key + 2, (B, H, D))
+    w = jax.nn.sigmoid(jax.random.normal(key + 3, (B, H, D)))
+    b = jax.nn.sigmoid(jax.random.normal(key + 4, (B, H, D)))
+    g = -jnp.exp(jax.random.normal(key + 5, (B, H, D)) * 0.39 - 1.0)
+    state = jnp.zeros((B, H, D, D), jnp.float32)
+    from atomic_gdn2.inference import LayerInputs
+    inp = LayerInputs(q=q, k=k, v=v, w=w, b=b, g=g)
+    o_c, s_c = decode_step(inputs=inp, state=state, scale=scale, cfg=cfg)
+    o_p, s_p = decode_step(q, k, v, w, b, g, state, scale, cfg=cfg)
+    np.testing.assert_array_equal(np.asarray(o_c), np.asarray(o_p))
+    np.testing.assert_array_equal(np.asarray(s_c), np.asarray(s_p))
+
+
+def test_b4_static_param_friendly_error():
+    """Audit B4: traced/array scale -> friendly ValueError, not a deep crash."""
+    import jax
+    key = jax.random.PRNGKey(33)
+    B, H, D = 1, 2, 16
+    cfg = make_cfg(bt=16, bc=8, mb=8, score_bs=16, bs2=8, interpret=True)
+    q = jax.random.normal(key, (B, H, D)) * 0.5
+    k = jax.random.normal(key + 1, (B, H, D)) * 0.5
+    v = jax.random.normal(key + 2, (B, H, D))
+    w = jax.nn.sigmoid(jax.random.normal(key + 3, (B, H, D)))
+    b = jax.nn.sigmoid(jax.random.normal(key + 4, (B, H, D)))
+    g = -jnp.exp(jax.random.normal(key + 5, (B, H, D)) * 0.39 - 1.0)
+    state = jnp.zeros((B, H, D, D), jnp.float32)
+    with pytest.raises(ValueError, match="concrete Python float"):
+        decode_step(q, k, v, w, b, g, state, jnp.asarray(0.7), cfg=cfg)
+
+
+def test_adversarial_zero_k_and_extreme_g():
+    """Zero keys (erase = write = 0 net) and in-domain extreme decay."""
+    key = jax.random.PRNGKey(34)
+    B, H, D, scale = 1, 2, 16, 1.0
+    cfg = make_cfg(bt=16, bc=8, mb=8, score_bs=16, bs2=8, interpret=True,
+                   g_max=160.0 / 8)
+    q = jax.random.normal(key, (B, H, D)) * 0.5
+    k = jnp.zeros((B, H, D))                          # zero keys
+    v = jax.random.normal(key + 2, (B, H, D))
+    w = jax.nn.sigmoid(jax.random.normal(key + 3, (B, H, D)))
+    b = jax.nn.sigmoid(jax.random.normal(key + 4, (B, H, D)))
+    g = jnp.full((B, H, D), -cfg.g_max)               # extreme in-domain decay
+    state = jnp.zeros((B, H, D, D), jnp.float32)
+    o, new = decode_step(q, k, v, w, b, g, state, scale, cfg=cfg)
+    # zero k -> no state write, no erase: S = Diag(exp(g)) S, o = q . S = 0
+    assert float(np.abs(np.asarray(o)).max()) == 0.0
+    assert float(np.abs(np.asarray(new)).max()) == 0.0
+    assert bool(jnp.isfinite(new).all())
