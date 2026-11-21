@@ -637,3 +637,80 @@ def test_adversarial_zero_k_and_extreme_g():
     assert float(np.abs(np.asarray(o)).max()) == 0.0
     assert float(np.abs(np.asarray(new)).max()) == 0.0
     assert bool(jnp.isfinite(new).all())
+
+
+def test_layer_conventions_vs_serial():
+    """Audit Stage 2.4: the FULL layer conventions (short conv + projections +
+    l2norm + sigmoids + checkpoint gate construction + kernel + RMSNormSwishGate
+    + o_proj) against the serial reference. This is the parity the TPU
+    notebook (gdn2_v031_stage2_tpu.ipynb RUN 2) measures against NVlabs."""
+    key = jax.random.PRNGKey(40)
+    B, H, Dh, bt, scale = 1, 4, 16, 16, 1.0
+    L = bt
+    D = H * Dh; Dk = D
+    cfg = make_cfg(bt=bt, bc=bt // 2, mb=8, score_bs=bt, bs2=bt // 4,
+                   interpret=True, g_max=160.0 / (bt // 4))
+    W = {
+        "q_proj.weight": jax.random.normal(key, (Dk, D)) * 0.02,
+        "k_proj.weight": jax.random.normal(key + 1, (Dk, D)) * 0.02,
+        "v_proj.weight": jax.random.normal(key + 2, (D, D)) * 0.02,
+        "w_proj.weight": jax.random.normal(key + 3, (D, D)) * 0.02,
+        "b_proj.weight": jax.random.normal(key + 4, (Dk, D)) * 0.02,
+        "f_proj.0.weight": jax.random.normal(key + 5, (Dh, D)) * 0.02,
+        "f_proj.1.weight": jax.random.normal(key + 6, (Dk, Dh)) * 0.02,
+        "g_proj.0.weight": jax.random.normal(key + 7, (Dh, D)) * 0.02,
+        "g_proj.1.weight": jax.random.normal(key + 8, (D, Dh)) * 0.02,
+        "g_proj.1.bias": jnp.zeros(D),
+        "A_log": jax.random.normal(key + 9, (H,)) * 0.3,
+        "dt_bias": jax.random.normal(key + 10, (Dk,)) * 0.2,
+        "o_proj.weight": jax.random.normal(key + 11, (D, D)) * 0.02,
+        "o_norm.weight": (jax.random.normal(key + 12, (Dh,)) * 0.5 + 1),
+        "q_conv1d.conv.weight": jax.random.normal(key + 13, (D, 1, 4)) * 0.1,
+        "k_conv1d.conv.weight": jax.random.normal(key + 14, (D, 1, 4)) * 0.1,
+        "v_conv1d.conv.weight": jax.random.normal(key + 15, (D, 1, 4)) * 0.1,
+    }
+    x = jax.random.normal(key + 20, (B, L, D)) * 0.5
+    tq = x[0]                                            # (L, D)
+    lin = lambda n: tq @ W[n + ".weight"].T
+
+    def conv(xl, wname):                                 # causal depthwise + silu
+        wc = W[wname][:, 0, :]                           # (D, 4)
+        xp = jnp.pad(xl.T, ((0, 0), (3, 0)))             # (D, L+3)
+        y = sum(xp[:, kk:kk+L] * wc[:, kk][:, None] for kk in range(4))
+        return y.T
+    l2 = lambda t: t * jax.lax.rsqrt((t*t).sum(-1, keepdims=True) + 1e-6)
+    q = l2(jax.nn.silu(conv(lin("q_proj"), "q_conv1d.conv.weight")))
+    k = l2(jax.nn.silu(conv(lin("k_proj"), "k_conv1d.conv.weight")))
+    v = jax.nn.silu(conv(lin("v_proj"), "v_conv1d.conv.weight"))
+    b = jax.nn.sigmoid(lin("b_proj"))
+    w = jax.nn.sigmoid(lin("w_proj"))
+    f = lin("f_proj.0") @ W["f_proj.1.weight"].T
+    # g construction in (L, Dk) space: dt_bias is per-K-channel; the per-head
+    # A_log multiplies after the head split (audit A4 checkpoint contract)
+    g = (-W["A_log"].reshape(H, 1)
+         * jax.nn.softplus(f + W["dt_bias"].reshape(1, Dk)).reshape(L, H, Dh)).reshape(L, Dk)
+
+    # serial reference on the SAME prepared q/k/v/w/b/g — head-split to
+    # (B, L, H, Dh) as token_serial_ref expects (batch dim added)
+    sp4 = lambda t: t.reshape(L, H, Dh)[None]
+    o_ref, _ = token_serial_ref(sp4(q), sp4(k), sp4(v), sp4(g), sp4(b),
+                                sp4(w), scale)
+    o_ref = o_ref[0].reshape(L, H, Dh)
+
+    # chunk kernel path
+    hm = lambda t: t.reshape(1, L, H, Dh).transpose(0, 2, 1, 3)
+    o_kern, _ = chunk_forward_inference(hm(q), hm(k), hm(v), hm(w), hm(b), hm(g),
+                                        scale, cfg)
+    o_kern = o_kern[0].transpose(1, 0, 2)                # (L, H, Dh)
+
+    # shared epilogue: RMSNormSwishGate + o_proj
+    gate_pre = tq @ W["g_proj.0.weight"].T @ W["g_proj.1.weight"].T + W["g_proj.1.bias"]
+    Wn = W["o_norm.weight"].reshape(1, 1, Dh)
+    def epilogue(o):
+        o3 = o.reshape(L, H, Dh)
+        v_rms = jnp.sqrt((o3**2).mean(-1, keepdims=True) + 1e-5)
+        return (o3 / v_rms * Wn * jax.nn.silu(gate_pre.reshape(L, H, Dh))).reshape(L, Dk) @ W["o_proj.weight"].T
+    e_ref = epilogue(o_ref)
+    e_kern = epilogue(o_kern)
+    rel = np.linalg.norm(np.asarray(e_kern) - np.asarray(e_ref)) / (np.linalg.norm(np.asarray(e_ref)) + 1e-9)
+    assert rel < 1e-3, f"layer conventions diverge: rel L2 {rel:.5f}"
