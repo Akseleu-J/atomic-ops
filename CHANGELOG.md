@@ -22,6 +22,37 @@ the earlier figures were single-run measurements. Historical records remain unch
 See [current methods](benchmarks/README.md) and [scope](KNOWN_LIMITATIONS.md).
 
 
+## [0.4.0-alpha.2] - 2026-11-26 (TPU serving-gate fixes; preview)
+
+Fixes for the five serving gates that failed on Colab TPU v5e
+(`gdn2_colab_inference_checks`, 2026-11-24). Each has a scaled-down CPU
+interpret regression test (`tests/test_inference_v03.py::test_tpu_gate_*`),
+red before the fix and green after. TPU confirmation is still pending.
+
+### Fixed
+- **Segment ids in later launches** (`A_segment_offsets_in_second_launch`,
+  rel L2 0.186 on TPU): the padded per-row segment block was built once from
+  chunks `0..n-1`, so every launch after the first read the first launch's
+  document ids. The block is now built per launch from that launch's chunks.
+- **Tail-only prefill dropped `h0`** (`A_tail_only_preserves_nonzero_h0`,
+  rel L2 0.90): with `L < bt` the first tail token was compared with id 0 and
+  reset the state whenever the first document's id was not 0. It is now
+  compared with itself: `h0` belongs to the first document whatever its id.
+- **`cu_seqlens` boundary inside a chunk accepted**
+  (`A_reject_cu_seqlen_inside_chunk`): the A2 check ran before the
+  `cu_seqlens` conversion. It now runs on the converted ids.
+- **`jax.jit` of `decode_step` and `chunk_forward_inference`**
+  (`A_decode_jittable`, `A_prefill_jittable`): the numpy round-trip of pallas
+  outputs failed on tracers. It now runs only for eager interpret-mode
+  outputs, which also removes a device-to-host copy per call on TPU.
+
+### Added
+- `check_document_boundaries(segment_ids, bt)` and
+  `cu_seqlens_to_segment_ids(cu_seqlens, bsz, L)`, exported from
+  `atomic_gdn2`. Under `jax.jit` the ids are traced and the in-call boundary
+  and g-domain checks are skipped; a serving loop validates on the host with
+  these helpers before dispatch.
+
 ## [0.4.0-alpha] - 2026-11-20 (audit Stage 3; preview)
 
 ### Added

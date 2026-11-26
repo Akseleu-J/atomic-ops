@@ -25,7 +25,8 @@ from .precision import exp_nonpos, sanitize
 from .layout import cparams
 from .config import BLRConfig
 
-__all__ = ["decode_step", "chunk_forward_inference", "LayerInputs"]
+__all__ = ["decode_step", "chunk_forward_inference", "LayerInputs",
+           "check_document_boundaries", "cu_seqlens_to_segment_ids"]
 
 import dataclasses as _dc
 
@@ -60,6 +61,79 @@ class LayerInputs:
         return (self.q, self.k, self.v, self.w, self.b, self.g)
 
 PAD_N = 128  # segment-block padding for TPU Mosaic block-shape legality
+
+
+def _materialize(x, interpret: bool):
+    """Turn eager interpret-mode pallas outputs into plain jnp arrays.
+
+    In eager interpret mode the outputs behave like Refs (leading-axis unwrap on
+    fancy indexing), so they are round-tripped through numpy. Compiled (TPU)
+    outputs are device arrays: no round-trip, which also removes a device->host
+    copy per decode step. Under jax.jit the values are tracers: a numpy
+    round-trip is impossible (TPU gates A_decode_jittable / A_prefill_jittable
+    failed exactly here), so they pass through unchanged.
+    """
+    if not interpret or isinstance(x, jax.core.Tracer):
+        return x
+    return jnp.asarray(np.asarray(x))
+
+
+def _concrete(x):
+    """numpy view of x, or None when x is traced (validation then defers to the
+    caller: see check_document_boundaries)."""
+    if isinstance(x, jax.core.Tracer):
+        return None
+    try:
+        return np.asarray(x)
+    except (TypeError, ValueError):
+        return None
+
+
+def cu_seqlens_to_segment_ids(cu_seqlens, bsz: int, L: int):
+    """(n_docs+1,) shared or (B, n_docs+1) per-row offsets -> (B, L) int32 ids.
+
+    A boundary token STARTS its document (`>=` semantics, audit A3).
+    """
+    cs = jnp.asarray(cu_seqlens)
+    if cs.ndim == 1:
+        cs = jnp.broadcast_to(cs[None, :], (bsz, cs.shape[0]))
+    if cs.shape[0] != bsz:
+        raise ValueError(f"cu_seqlens rows {cs.shape[0]} != batch {bsz}")
+    if cs.shape[1] <= 2:
+        return jnp.zeros((bsz, L), jnp.int32)               # single document
+    bounds = cs[:, 1:-1]                                     # (B, n_int)
+    pos = jnp.arange(L)
+    return (pos[None, :, None] >= bounds[:, None, :]).sum(axis=-1).astype(jnp.int32)
+
+
+def check_document_boundaries(segment_ids, bt: int):
+    """Raise ValueError if a document boundary falls inside a FULL chunk.
+
+    Boundaries are honored at chunk granularity by the chunkwise kernel (A2);
+    the tail after the last full chunk is decoded token by token and accepts
+    any boundary. chunk_forward_inference calls this automatically for concrete
+    inputs. Under jax.jit the ids are traced and cannot be inspected, so a
+    serving loop that jits prefill with dynamic boundaries must call this on
+    the host before dispatch (pass cu_seqlens through cu_seqlens_to_segment_ids
+    first).
+    """
+    ids = _concrete(segment_ids)
+    if ids is None:
+        raise ValueError("check_document_boundaries needs concrete (non-traced) ids")
+    ids = ids.reshape(ids.shape[0], -1)
+    bsz, L = ids.shape
+    n_full = L // bt
+    if n_full == 0:
+        return
+    chunks = ids[:, :n_full * bt].reshape(bsz, n_full, bt)
+    bad = (chunks != chunks[:, :, :1]).any(axis=-1)          # (B, n_full)
+    if bad.any():
+        b_idx, c_idx = np.argwhere(bad)[0]
+        raise ValueError(
+            f"document boundary inside chunk {int(c_idx)} of batch row "
+            f"{int(b_idx)} (tokens start at {int(c_idx) * bt}): split the "
+            "sequence at document boundaries before calling "
+            "chunk_forward_inference (chunk-granularity resets only)")
 
 
 def _decode_body(state_ref, q_ref, k_ref, v_ref, w_ref, b_ref, g_ref,
@@ -171,6 +245,7 @@ def decode_step(q=None, k=None, v=None, w=None, b=None, g=None, state=None,
                 else jnp.zeros((1, H), jnp.float32))
     dt_in = (jnp.asarray(dt_bias).reshape(1, D) if fuse_prologue
              else jnp.zeros((1, D), jnp.float32))
+    interpret = cfg.interpret if cfg is not None else jax.default_backend() != "tpu"
     o, new = pl.pallas_call(
         lambda *r: _decode_body(*r, scale=float(scale), stability_tau=stability_tau,
                                 fuse_prologue=fuse_prologue),
@@ -180,15 +255,9 @@ def decode_step(q=None, k=None, v=None, w=None, b=None, g=None, state=None,
         out_shape=[jax.ShapeDtypeStruct((bsz, H, D), q.dtype),
                    jax.ShapeDtypeStruct((bsz, H, D, D), state_dtype)],
         compiler_params=cparams(cfg.vmem_mb if cfg is not None else 150.0),
-        interpret=(cfg.interpret if cfg is not None else jax.default_backend() != "tpu"),
+        interpret=interpret,
     )(st, q, k, v, w, b, g, a_log_in, dt_in)
-    # materialize: in interpret mode the outputs are Ref objects whose fancy
-    # indexing follows ref semantics (leading-axis unwrap), which breaks the
-    # guard below — round-trip through numpy to get plain jnp arrays (no-op
-    # on TPU where the outputs are real arrays already).
-    o = jnp.asarray(np.asarray(o))
-    new = jnp.asarray(np.asarray(new))
-    return o, new
+    return _materialize(o, interpret), _materialize(new, interpret)
 
 
 def _cd_inference_body(q_ref, k_ref, v_ref, w_ref, b_ref, gc_ref, a_ref, aqk_ref,
@@ -232,19 +301,24 @@ def chunk_forward_inference(q=None, k=None, v=None, w=None, b=None, g=None,
     """Forward-only prefill with bounded outputs: returns (o, h_final) only.
 
     Same math and layouts as pipeline.make_blr_trainable's forward (head-major
-    (B,H,L,D), L % cfg.bt == 0, segments of cfg.max_chunks_per_call chunks with
-    the state carried between them), but no training residuals are produced and
-    the recurrent state is returned in state_dtype.
+    (B,H,L,D), segments of cfg.max_chunks_per_call chunks with the state
+    carried between them), but no training residuals are produced and the
+    recurrent state is returned in state_dtype. Any L is accepted: full chunks
+    run through the chunkwise kernel, the L % bt tail through decode steps.
 
     segment_ids: optional (B, L) int tensor of document IDs. A document
-    boundary resets the state; boundaries are honored at CHUNK granularity in
-    this level (a chunk spanning two documents must be split by the caller —
-    the vLLM layer owns that scheduling). cu_seqlens: optional 1-D token
-    offsets; converted to per-token segment ids internally (same chunk
-    granularity caveat). initial_state is assumed to belong
-    to the first chunk's document.
+    boundary resets the state. Inside the full-chunk region boundaries must sit
+    on chunk starts (a boundary inside a chunk raises ValueError — the caller
+    splits documents); in the tail any boundary is honored. cu_seqlens:
+    optional (n_docs+1,) shared or (B, n_docs+1) per-row token offsets,
+    converted with cu_seqlens_to_segment_ids and validated the same way.
+    h0 belongs to each row's first document, whatever its id.
     stability_tau: optional cap on the Frobenius norm of the returned state
     (inference-only; the training path is never capped).
+
+    jax.jit: supported. Boundary and g-domain validation need concrete values
+    and are skipped for traced inputs — validate on the host with
+    check_document_boundaries before dispatching a jitted prefill.
     """
     if inputs is not None:
         q, k, v, w, b, g = inputs.as_tuple()
@@ -265,12 +339,8 @@ def chunk_forward_inference(q=None, k=None, v=None, w=None, b=None, g=None,
     # documented domain [-g_max, 0].
     g = jnp.minimum(jnp.asarray(g).astype(jnp.float32), 0.0)
     g_max_abs = float(cfg.g_max)
-    try:
-        g_np = np.asarray(g)                     # concrete only; skipped under jit
-        g_bad = bool((g_np < -g_max_abs - 1e-6).any())
-    except (TypeError, ValueError):
-        g_bad = False
-    if g_bad:
+    g_np = _concrete(g)                          # concrete only; skipped under jit
+    if g_np is not None and bool((g_np < -g_max_abs - 1e-6).any()):
         raise ValueError(
             f"g outside the layer domain: min(g) < -g_max={g_max_abs} "
             "(the layer constructs g = -min(softplus(...), g_max); clamp or "
@@ -280,53 +350,27 @@ def chunk_forward_inference(q=None, k=None, v=None, w=None, b=None, g=None,
     n_full = L // cfg.bt
     L_full = n_full * cfg.bt
     r_tail = L - L_full
-    if segment_ids is not None and n_full > 0:
-        seg_tok = jnp.asarray(segment_ids).reshape(bsz, L)[:, :L_full]
-        # A2 fix (owner decision): a document boundary INSIDE a chunk used to
-        # be silently ignored (20.9% error). Raise loudly instead — the
-        # caller must split chunks at document boundaries. The TAIL (after
-        # the full chunks) is exempt: decode steps handle per-token resets.
-        per_chunk_first = seg_tok[:, ::cfg.bt]                       # (B, n_full)
-        same = (seg_tok.reshape(bsz, n_full, cfg.bt)
-                == per_chunk_first[:, :, None])                      # (B, n_full, bt)
-        bad = ~(same.all(axis=-1))                                   # (B, n_full)
-        try:
-            bad_concrete = bool(np.asarray(bad.any()))
-        except (TypeError, ValueError):
-            bad_concrete = False
-        if bad_concrete:
-            b_idx, c_idx = np.argwhere(np.asarray(bad))[0]
-            raise ValueError(
-                f"document boundary inside chunk {int(c_idx)} of batch row "
-                f"{int(b_idx)} (tokens start at {int(c_idx) * cfg.bt}): split "
-                "the sequence at document boundaries before calling "
-                "chunk_forward_inference (chunk-granularity resets only)")
     if cu_seqlens is not None:
         # A3 fix: any number of documents, any batch size. cu_seqlens is either
         # 1-D (shared by all rows) or (B, n_docs+1). A boundary token STARTS a
         # new document (audit: the earlier `>` semantics shifted resets late).
         if segment_ids is not None:
             raise ValueError("pass either segment_ids or cu_seqlens, not both")
-        cs = jnp.asarray(cu_seqlens)
-        if cs.ndim == 1:
-            cs = jnp.broadcast_to(cs[None, :], (bsz, cs.shape[0]))
-        n_int = cs.shape[1] - 2
-        pos = jnp.arange(L)
-        if n_int <= 0:
-            segment_ids = jnp.zeros((bsz, L), jnp.int32)   # single document
-        else:
-            bounds = cs[:, 1:-1]                           # (B, n_int)
-            # a boundary token STARTS its document
-            segment_ids = (pos[None, :, None] >= bounds[:, None, :]).sum(axis=-1).astype(jnp.int32)
+        segment_ids = cu_seqlens_to_segment_ids(cu_seqlens, bsz, L)
     seg_chunk = None
-    seg_padded = None
     if segment_ids is not None:
-        seg = jnp.asarray(segment_ids).reshape(bsz, L)
+        seg = jnp.asarray(segment_ids).reshape(bsz, L).astype(jnp.int32)
+        # A2 (owner decision): a boundary INSIDE a full chunk raises. Checked
+        # AFTER the cu_seqlens conversion (TPU gate A_reject_cu_seqlen_inside_
+        # chunk: the old order validated only explicit segment_ids). The tail
+        # is exempt: decode steps handle per-token resets. Traced ids (jit)
+        # cannot be inspected here — see check_document_boundaries.
+        if _concrete(seg) is not None:
+            check_document_boundaries(seg, cfg.bt)
         seg_chunk = seg[:, :L_full:cfg.bt][:, :n_full]  # (B, n_full) seg at chunk start
-        # A1 fix: pad to (B, 8, PAD_N) so each program can read ITS row's
-        # boundaries through a TPU-legal block (row 0 = this row, 1-7 pad)
-        seg_padded = jnp.zeros((bsz, 8, PAD_N), dtype=seg_chunk.dtype)
-        seg_padded = seg_padded.at[:, 0, :n_full].set(seg_chunk)
+    if seg_chunk is not None and min(cfg.max_chunks_per_call, n_full) > PAD_N:
+        raise ValueError(f"max_chunks_per_call must be <= {PAD_N} with document ids "
+                         "(one launch's chunk ids must fit the padded segment block)")
 
     outs = []
     for s in range(0, n_full, cfg.max_chunks_per_call):
@@ -337,8 +381,15 @@ def chunk_forward_inference(q=None, k=None, v=None, w=None, b=None, g=None,
         # gc is the PER-CHUNK cumulative decay (pipeline computes it on the
         # chunked tensor, axis=-2 == the bt axis), not over the whole sequence.
         gc_c = jnp.cumsum(sl(g).astype(jnp.float32), axis=-2)
+        # A1 fix: per-row (B, 8, PAD_N) TPU-legal block; row 0 of each block =
+        # this batch row's chunk ids, rows 1-7 are padding. Built PER LAUNCH
+        # from this launch's chunks (TPU gate A_segment_offsets_in_second_launch:
+        # one buffer for chunks 0..n-1 made every later launch read the first
+        # launch's ids).
+        seg_padded = jnp.zeros((bsz, 8, PAD_N), jnp.int32)
         if seg_chunk is not None:
             seg_cur = seg_chunk[:, s:e]
+            seg_padded = seg_padded.at[:, 0, :n].set(seg_cur)
             if s > 0:
                 # document changed at the segment boundary -> zero those rows
                 boundary = seg_cur[:, 0] != seg_chunk[:, s - 1]
@@ -370,11 +421,10 @@ def chunk_forward_inference(q=None, k=None, v=None, w=None, b=None, g=None,
                        jax.ShapeDtypeStruct((bsz, H, D, D), jnp.float32)],
             compiler_params=cparams(cfg.vmem_mb),
             interpret=cfg.interpret,
-        )(q_c, k_c, v_c, w_c, b_c, gc_c, A, Aqk, h_in.astype(jnp.float32),
-          seg_padded if seg_padded is not None else jnp.zeros((bsz, 8, PAD_N), jnp.int32))
-        # materialize interpret-mode Refs to plain arrays (see decode_step)
-        h = jnp.asarray(np.asarray(hf))
-        outs.append(from_chunks_local(jnp.asarray(np.asarray(o_ch))))
+        )(q_c, k_c, v_c, w_c, b_c, gc_c, A, Aqk, h_in.astype(jnp.float32), seg_padded)
+        # materialize eager interpret-mode Refs to plain arrays (see _materialize)
+        h = _materialize(hf, cfg.interpret)
+        outs.append(from_chunks_local(_materialize(o_ch, cfg.interpret)))
     o = (jnp.concatenate(outs, axis=2) if len(outs) > 1
          else (outs[0] if outs else None))
 
@@ -382,12 +432,14 @@ def chunk_forward_inference(q=None, k=None, v=None, w=None, b=None, g=None,
     if r_tail > 0:
         tail_resets = None
         if seg_chunk is not None:
-            seg_full = jnp.asarray(segment_ids).reshape(bsz, L)
-            if L_full > 0:
-                prev = jnp.concatenate([seg_full[:, L_full - 1:L_full],
-                                        seg_full[:, L_full:-1]], axis=1)[:, :r_tail]
-            else:
-                prev = jnp.zeros((bsz, r_tail), jnp.int32)
+            seg_full = seg
+            # id preceding each tail token. With no full chunks the first tail
+            # token is compared with ITSELF: h0 belongs to the first document
+            # whatever its id (TPU gate A_tail_only_preserves_nonzero_h0: a
+            # constant 0 here reset h0 for any first-document id != 0).
+            first_prev = (seg_full[:, L_full - 1:L_full] if L_full > 0
+                          else seg_full[:, :1])
+            prev = jnp.concatenate([first_prev, seg_full[:, L_full:-1]], axis=1)
             tail_resets = (seg_full[:, L_full:] != prev).astype(jnp.int32)  # (B, r)
         outs_tail = []
         for j in range(r_tail):

@@ -714,3 +714,133 @@ def test_layer_conventions_vs_serial():
     e_kern = epilogue(o_kern)
     rel = np.linalg.norm(np.asarray(e_kern) - np.asarray(e_ref)) / (np.linalg.norm(np.asarray(e_ref)) + 1e-9)
     assert rel < 1e-3, f"layer conventions diverge: rel L2 {rel:.5f}"
+
+
+# ---------------------------------------------------------------------------
+# TPU serving gates that failed on Colab v5e (gdn2_colab_inference_checks,
+# 2026-11-24, REPORT sha256 84c02c00...): scaled-down CPU interpret versions.
+# ---------------------------------------------------------------------------
+
+def _blhd_inputs(seed, B, L, H, D):
+    key = jax.random.PRNGKey(seed)
+    q = jax.random.normal(key, (B, L, H, D)) * 0.5
+    k = jax.random.normal(key + 1, (B, L, H, D)) * 0.5
+    q = q / jnp.linalg.norm(q, axis=-1, keepdims=True)
+    k = k / jnp.linalg.norm(k, axis=-1, keepdims=True)
+    v = jax.random.normal(key + 2, (B, L, H, D))
+    w = jax.nn.sigmoid(jax.random.normal(key + 3, (B, L, H, D)))
+    b = jax.nn.sigmoid(jax.random.normal(key + 4, (B, L, H, D)))
+    g = -jnp.exp(jax.random.normal(key + 5, (B, L, H, D)) * 0.39 - 1.0)
+    h0 = jax.random.normal(key + 6, (B, H, D, D)) * 0.1
+    return q, k, v, w, b, g, h0
+
+
+def _serial_by_documents(q, k, v, w, b, g, seg, h0, scale=1.0):
+    """Serial reference with document resets; h0 belongs to each row's first doc."""
+    ids = np.asarray(seg)
+    B, L = ids.shape
+    outs, finals = [], []
+    for r in range(B):
+        starts = [0] + [t for t in range(1, L) if ids[r, t] != ids[r, t - 1]] + [L]
+        parts, h = [], None
+        for a, e in zip(starts[:-1], starts[1:]):
+            sl = lambda t: t[r:r + 1, a:e]
+            o, h = token_serial_ref(sl(q), sl(k), sl(v), sl(g), sl(b), sl(w), scale,
+                                    h0=h0[r:r + 1] if a == 0 else None)
+            parts.append(o)
+        outs.append(jnp.concatenate(parts, axis=1))
+        finals.append(h)
+    return jnp.concatenate(outs, axis=0), jnp.concatenate(finals, axis=0)
+
+
+def _rel_l2(a, b):
+    a, b = np.asarray(a, np.float64), np.asarray(b, np.float64)
+    return float(np.linalg.norm(a - b) / (np.linalg.norm(b) + 1e-12))
+
+
+_hm = lambda t: jnp.transpose(t, (0, 2, 1, 3))   # (B,L,H,D) <-> (B,H,L,D)
+
+
+def _cfg_small(**kw):
+    bt = 16
+    return make_cfg(bt=bt, bc=bt // 2, mb=8, score_bs=bt, bs2=bt // 4,
+                    interpret=True, g_max=160.0 / (bt // 4), **kw)
+
+
+def test_tpu_gate_segment_offsets_in_second_launch():
+    """TPU gate A_segment_offsets_in_second_launch (rel L2 0.186 on v5e).
+
+    4 full chunks with max_chunks_per_call=2 -> two launches. Row 0 changes
+    document at chunk 3 (inside launch 2), row 1 in the tail. The second launch
+    must read ITS chunks' ids, not chunk 0/1's.
+    """
+    B, H, D, bt = 2, 2, 16, 16
+    L = 4 * bt + 3
+    q, k, v, w, b, g, h0 = _blhd_inputs(50, B, L, H, D)
+    pos = np.arange(L)
+    seg = jnp.asarray(np.stack([(pos >= 3 * bt), (pos >= 4 * bt)]).astype(np.int32))
+    cfg = _cfg_small(max_chunks_per_call=2)
+    o, hf = chunk_forward_inference(*(_hm(t) for t in (q, k, v, w, b, g)), 1.0, cfg,
+                                    h0=h0, segment_ids=seg)
+    o_ref, hf_ref = _serial_by_documents(q, k, v, w, b, g, seg, h0)
+    assert _rel_l2(_hm(o), o_ref) < 2e-3
+    assert _rel_l2(hf, hf_ref) < 2e-3
+
+
+def test_tpu_gate_tail_only_preserves_nonzero_h0():
+    """TPU gate A_tail_only_preserves_nonzero_h0 (rel L2 0.90 on v5e).
+
+    L < bt and one document whose id is not 0: h0 belongs to that document and
+    must not be reset by the first tail token.
+    """
+    B, H, D = 2, 2, 16
+    L = 3
+    q, k, v, w, b, g, h0 = _blhd_inputs(51, B, L, H, D)
+    seg = jnp.full((B, L), 7, jnp.int32)
+    o, hf = chunk_forward_inference(*(_hm(t) for t in (q, k, v, w, b, g)), 1.0,
+                                    _cfg_small(), h0=h0, segment_ids=seg)
+    o_ref, hf_ref = _serial_by_documents(q, k, v, w, b, g, seg, h0)
+    assert _rel_l2(_hm(o), o_ref) < 1e-4
+    assert _rel_l2(hf, hf_ref) < 1e-4
+
+
+def test_tpu_gate_reject_cu_seqlens_inside_chunk():
+    """TPU gate A_reject_cu_seqlen_inside_chunk: a cu_seqlens boundary inside a
+    full chunk was accepted; it must raise like segment_ids does (A2)."""
+    B, H, D, bt = 1, 2, 16, 16
+    L = 2 * bt
+    q, k, v, w, b, g, _ = _blhd_inputs(52, B, L, H, D)
+    with pytest.raises(ValueError, match="boundary inside chunk"):
+        chunk_forward_inference(*(_hm(t) for t in (q, k, v, w, b, g)), 1.0,
+                                _cfg_small(), cu_seqlens=jnp.array([0, 21, L]))
+
+
+def test_tpu_gate_decode_jittable():
+    """TPU gate A_decode_jittable: decode_step under jax.jit (with a traced
+    per-row reset) equals the eager call."""
+    B, H, D = 2, 2, 16
+    q, k, v, w, b, g, h0 = _blhd_inputs(53, B, 1, H, D)
+    xs = tuple(t[:, 0] for t in (q, k, v, w, b, g))
+    cfg = _cfg_small()
+    reset = jnp.array([0, 1], jnp.int32)
+    eager = decode_step(*xs, h0, 1.0, reset=reset, cfg=cfg)
+    jitted = jax.jit(lambda a, s, r: decode_step(*a, s, 1.0, reset=r, cfg=cfg))(xs, h0, reset)
+    for x, y in zip(eager, jitted):
+        np.testing.assert_allclose(np.asarray(y), np.asarray(x), rtol=1e-6, atol=1e-6)
+
+
+def test_tpu_gate_prefill_jittable_packed():
+    """TPU gates A_prefill_jittable + FIX_prefill_jit_packed_against_serial:
+    prefill under jax.jit with traced segment ids, two launches and a tail."""
+    B, H, D, bt = 2, 2, 16, 16
+    L = 4 * bt + 3
+    q, k, v, w, b, g, h0 = _blhd_inputs(54, B, L, H, D)
+    pos = np.arange(L)
+    seg = jnp.asarray(np.stack([(pos >= 3 * bt), (pos >= 4 * bt + 1)]).astype(np.int32))
+    cfg = _cfg_small(max_chunks_per_call=2)
+    fn = jax.jit(lambda xs, s, ids: chunk_forward_inference(*xs, 1.0, cfg, h0=s,
+                                                            segment_ids=ids))
+    o, hf = fn(tuple(_hm(t) for t in (q, k, v, w, b, g)), h0, seg)
+    o_ref, hf_ref = _serial_by_documents(q, k, v, w, b, g, seg, h0)
+    assert _rel_l2(_hm(o), o_ref) < 2e-3
+    assert _rel_l2(hf, hf_ref) < 2e-3
